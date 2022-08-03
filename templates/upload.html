@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block pageTitle %}{{gstr("upload")}}{% endblock %}
+{% block topExtraJS %}
+<script>
+function _(el) {
+    return document.getElementById(el);
+}
+var started_at;
+function uploadFile() {
+    var formdata = new FormData();
+    _("status").innerHTML = ""
+    $("#backToFolderBtn").addClass("disabled");
+    $("#switchUploadTypeBtn").addClass("disabled");
+    $("#uploadBtn").addClass("disabled")
+    $("#uploadBtn").html('<i class="material-icons left">file_upload</i>{{gstr("uploading")}}')
+    var inputFile = _("file");
+    inputFile.setAttribute("disabled",true)
+    for (var i=0;i<inputFile.files.length;i++)
+    { 
+        var file = inputFile.files[i];
+        formdata.append("file"+i, file);
+    }
+    // alert(file.name+" | "+file.size+" | "+file.type);
+    var ajax = new XMLHttpRequest();
+    window.started_at = new Date();
+    ajax.upload.addEventListener("progress", progressHandler, false);
+    ajax.addEventListener("load", completeHandler, false);
+    ajax.addEventListener("error", errorHandler, false);
+    ajax.addEventListener("abort", abortHandler, false);
+    ajax.open("POST", "{{path}}?action=upload");
+    ajax.setRequestHeader("X-CSRFToken","{{ csrf_token() }}")
+    ajax.send(formdata);
+}
+function sizeof_fmt(bytes,decimals="2") {
+    if(bytes == 0) return '0 Bytes';
+    var k = 1024,
+        dm = decimals || 2,
+        sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+        i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+function progressHandler(event) {
+    _("loaded_n_total").innerHTML = "Uploaded " + event.loaded + " bytes of " + event.total;
+    var percent = (event.loaded / event.total) * 100;
+    _("progressBar").style = "width:"+Math.round(percent)+"%";
+    //_("status").innerHTML = Math.round(percent) + "% uploaded... please wait";
+    var loaded = event.loaded;
+    var total = event.total;
+    var progressValue = Math.round( ( loaded / total ) * 100 );
+    var seconds_elapsed =   ( new Date().getTime() - started_at.getTime() )/1000;
+    var bytes_per_second =  seconds_elapsed ? loaded / seconds_elapsed : 0 ;
+    var Kbytes_per_second = bytes_per_second / 1024 ;
+    var remaining_bytes =   total - loaded;
+    var seconds_remaining = seconds_elapsed ? remaining_bytes / bytes_per_second : 'calculating' ;
+    _("uploadedRatioLabel").innerHTML = Math.round(percent) + "%"
+    _("uploadedLabel").innerHTML = sizeof_fmt(event.loaded)
+    _("remainingLabel").innerHTML = sizeof_fmt(event.total-event.loaded)
+    _("timeLeftLabel").innerHTML = Math.round(seconds_remaining) + "s"
+    _("totalLabel").innerHTML = sizeof_fmt(event.total)
+    _("speedLabel").innerHTML = sizeof_fmt(bytes_per_second) + "/s"
+}
+
+function completeHandler(event) {
+    _("status").innerHTML = event.target.responseText;
+    _("progressBar").style = "width:100%";
+    _("file").removeAttribute("disabled")
+    $("#backToFolderBtn").removeClass("disabled");
+    $("#switchUploadTypeBtn").removeClass("disabled");
+    $("#uploadBtn").removeClass("disabled")
+    $("#uploadBtn").html('<i class="material-icons left">file_upload</i>{{gstr("upload")}}')
+    $("#uploadStatusTitle").text(event.target.responseText)
+    $("#uploadStatusModal").modal("open")
+}
+
+function errorHandler(event) {
+    _("status").innerHTML = "{{gstr('uploadFailed')}}"
+    _("progressBar").style = "width:0%";
+    _("file").removeAttribute("disabled")
+    $("#backToFolderBtn").removeClass("disabled");
+    $("#switchUploadTypeBtn").removeClass("disabled");
+    $("#uploadBtn").removeClass("disabled")
+    $("#uploadBtn").html('<i class="material-icons left">file_upload</i>{{gstr("upload")}}')
+    $("#uploadStatusTitle").text("{{gstr('uploadFailed')}}")
+    $("#uploadStatusModal").modal("open")
+}
+
+function abortHandler(event) {
+    _("status").innerHTML = "Upload Aborted";
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<center>
+<div id="uploadStatusModal" class="modal bottom-sheet modal-fixed-footer" style="width: 500px;height:200px;margin-bottom:10px;left: calc(50% - 250px );top: calc(50% - 100px)">
+    <div class="modal-content" style="padding-bottom: 9px;">
+        <h4 id="uploadStatusTitle">Modal Header</h4>
+    </div>
+    <div class="modal-footer">
+    <center>
+        <a href="{{path}}" class="modal-close waves-effect btn-flat" style="text-transform: none;"><i class="material-icons left">arrow_back</i>{{gstr("backToFolder")}}</a>
+        <a href="#!" class="modal-close waves-effect btn red" style="text-transform: none;"><i class="material-icons left">close</i>{{gstr("close")}}</a>
+    </center>
+    </div>
+    </div>
+</center>   
+<div class="card">
+    <div class="card-content">
+        <span class="card-title" style="font-size: 2rem;">{{gstr("uploadFile")}}</span>
+        <form id="upload_form" enctype="multipart/form-data" method="post">
+            <div class="file-field input-field" style="margin: 0;margin-bottom: -12px;">
+                <div class="btn">
+                  <span>{{gstr("selectFiles")}}</span>
+                  <input type="file" name='file' id="file" multiple>
+                </div>
+                <div class="file-path-wrapper">
+                  <input class="file-path validate" type="text" placeholder="{{gstr('selectFilesTip')}}">
+                </div>
+            </div>
+            <p style="height: 10px;"></p>
+            <a class="waves-effect waves-light btn" id="uploadBtn" href="javascript:uploadFile()"><i class="material-icons left">upload</i>{{gstr("upload")}}</a>
+            <a href="?action=uploadFolder" class="modal-close waves-effect btn-flat" id="switchUploadTypeBtn" style="text-transform: none;"><i class="material-icons left">drive_folder_upload</i>{{gstr("uploadFolder")}}</a>
+            <a href="{{path}}" class="modal-close waves-effect btn-flat" id="backToFolderBtn" style="text-transform: none;"><i class="material-icons left">arrow_back</i>{{gstr("backToFolder")}}</a>
+        </form>
+        <div class="progress">
+            <div class="determinate" style="width: 0%" id="progressBar"></div>
+        </div>
+        <div class="row">
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("uploadedRatio")}}</div><div style="font-size: 2rem;" id="uploadedRatioLabel">0%</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("uploaded")}}</div><div style="font-size: 2rem;" id="uploadedLabel">0 MB</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("remaining")}}</div><div style="font-size: 2rem;" id="remainingLabel">0 MB</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("timeLeft")}}</div><div style="font-size: 2rem;" id="timeLeftLabel">0s</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">  
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("total")}}</div><div style="font-size: 2rem;" id="totalLabel">0 MB</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">  
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("speed")}}</div><div style="font-size: 2rem;" id="speedLabel">0 MB</div></div>    
+            </div>
+        </div>
+        <p id="status" style="font-size:21px;
+        line-height:24px;"></p>
+        <p id="loaded_n_total"></p>
+    </div>
+</div>
+{% endblock %}
+{% block onLoadScript %}
+$('.modal').modal({
+    dismissible: false
+});
+{% endblock %}
+      
+
+      

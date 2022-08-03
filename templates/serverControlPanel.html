@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block pageTitle %}{{gstr("manageAccount")}}{% endblock %}
+
+{% block content %}
+{% for message in get_flashed_messages(category_filter=["error"]) %}
+<div class="alert card red white-text">
+    <div class="card-content">
+      <p><i class="material-icons">report</i><span>{{message}}</span></p>
+  </div>
+</div>
+{% endfor %}
+{% for message in get_flashed_messages(category_filter=["success"]) %}
+<div class="alert card green white-text">
+    <div class="card-content">
+      <p><i class="material-icons">check_circle</i><span>{{message}}</span></p>
+  </div>
+</div>
+{% endfor %}
+<form id="serverLogoForm" action="/?action=uploadServerLogo" method="post" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+<div class="card">
+    <div class="card-content">
+        <div style="display:inline-flex">
+            <label for="server-logo-file-input">
+              <img src="/?action=getServerLogo&rid={{grid(0,1000000000)}}" style="height:120px">
+            </label>
+            <div style="display: inline;margin-left: 10px;">
+            <h4 style="margin-left: 10px;">{{serverName}}</h4>
+            <h5 style="margin-left: 10px;">{{request.host}}</h5>
+            </div>
+            <input id="server-logo-file-input" name="server-logo-file-input" type="file" onchange="javascript:document.getElementById('serverLogoForm').submit()" style="display: none;" accept="image/png, image/gif, image/jpeg" />
+        </div>
+    </div>
+</div>
+</form>
+<ul class="collection with-header">
+    <li class="collection-header"><h4>{{gstr("manageUsers")}}</h4><a href="/?action=addUser" class="waves-effect waves-light btn right" style="margin-top: -49px;"><i class="material-icons left">add</i>{{gstr("addUser")}}</a></li>
+    {% for user in users %}
+    {% if loop.index != 1 %}
+    <li class="collection-item avatar">
+      <img src="/?action=getAvatar&userId={{user}}&rid={{grid(0,1000000000)}}" alt="" class="circle">
+      <span class="title">{{users[user]["name"]}}</span>
+      <p>{{users[user]["role"]}}<br></p>
+      <a href="/?action=adminManageAccount&userId={{user}}" class="secondary-content waves-effect waves-light btn-flat"><i class="material-icons">edit</i></a>
+    </li>
+    {% endif %}
+    {% endfor %}
+</ul> 
+{% endblock %}

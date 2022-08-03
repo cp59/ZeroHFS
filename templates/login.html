@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block pageTitle %}
+{{gstr("login")}}
+{% endblock pageTitle %}
+
+{% block extraCSS %}
+<style>
+    .content  {
+        display: flex;
+        position: absolute;
+        height:calc(100% - 64px);
+        width: 100%;
+        margin: 0;
+    }
+
+    .container .row .card{
+        margin: 0 auto;
+        width: 500px;
+        transform: translate(-50%, -50%);
+    }
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row valign-wrapper">
+    <div class="halign-wrapper" style="width: 350px;">
+        {% for message in get_flashed_messages(category_filter=["error"]) %}
+        <div class="alert card red white-text">
+            <div class="card-content">
+                <p><i class="material-icons">report</i><span>{{message}}</span></p>
+            </div>
+        </div>
+        {% endfor %}
+        {% for message in get_flashed_messages(category_filter=["info"]) %}
+        <div class="alert card blue white-text">
+            <div class="card-content">
+                <p><i class="material-icons">info</i><span>{{message}}</span></p>
+            </div>
+        </div>
+        {% endfor %}
+        <div class="card">
+            <form action="/?action=login&next={{next}}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="card-content">
+                    <span class="card-title">{{gstr("login")}}</span>
+                    <br />
+                    <div class="form_div">
+                        <input type="text" class="form__input browser-default" name="username" id="username" required>
+                        <label for="" class="form__label browser-default">{{gstr("username")}}</label>
+                    </div>
+                    <div class="form_div">
+                        <input type="password" class="form__input browser-default" name="password" id="password" required>
+                        <label for="" class="form__label browser-default">{{gstr("password")}}</label>
+                    </div>
+                    <p>
+                        <label>
+                            <input type="checkbox" class="filled-in" id="rememberMe" name="rememberMe"/>
+                            <span>{{gstr("rememberMe")}}</span>
+                        </label>
+                    </p>
+                </div>
+                <div class="card-action right-align">
+                    <button class="btn waves-effect waves-light" type="submit" name="action">
+                        <i class="material-icons left">login</i>
+                        {{gstr("login")}}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>  
+</div>
+{% endblock content %}

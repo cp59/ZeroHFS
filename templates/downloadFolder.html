@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block pageTitle %}{{gstr("download")}}{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-content">
+        <span class="card-title" style="font-size: 2rem;">{{gstr("compressing")}}</span>
+        <div id="downloadProgressWidget">
+        <div class="progress">
+            <div class="determinate" style="width: 0%" id="progressBar"></div>
+        </div>
+        <div class="row">
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("compressingRatio")}}</div><div style="font-size: 2rem;" id="zipRatioLabel">0%</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("compressed")}}</div><div style="font-size: 2rem;" id="currentZipCountLabel">0 Files</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("remaining")}}</div><div style="font-size: 2rem;" id="remainingLabel">0 Files</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("timeLeft")}}</div><div style="font-size: 2rem;" id="timeLeftLabel">0s</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("total")}}</div><div style="font-size: 2rem;" id="totalLabel">0 MB</div></div>    
+            </div>
+            <div class="col s6 m4 l3" style="display: inline-flex;">
+                <div style="margin-left: 0px;"><div id="dLabel">{{gstr("speed")}}</div><div style="font-size: 2rem;" id="speedLabel">0 MB</div></div>    
+            </div>
+        </div>
+        </div>
+        <p id="status" style="font-size:21px;
+        line-height:24px;"></p>
+        <p id="loaded_n_total"></p>
+        <a href="/?action=cancelFolderDownload&doId={{doId}}" class="waves-effect btn" id="cancelDownloadBtn"><i class="material-icons left">close</i>{{gstr("cancel")}}</a>
+        <a href="javascript:location.reload()" class="waves-effect btn" id="redownloadBtn"><i class="material-icons left">refresh</i>{{gstr("redownload")}}</a>
+    </div>
+</div>
+{% endblock %}
+{% block onLoadScript %}
+$('.modal').modal({
+    dismissible: false
+});
+{% endblock %}
+{% block extraJS %}
+<script>
+    $("#redownloadBtn").hide()
+    var started_time = new Date().getTime();
+    var downloadCheckInterval = setInterval(async function() {
+        const response = await fetch("/?action=getFolderDownloadProgress&doId={{doId}}");
+        const result = await response.json();
+        if ((result.currentZip / result.total) * 100 == 100 ) {
+            $("#cancelDownloadBtn").hide()
+            $(".card-title").text("{{gstr('compressSuccess')}}");
+            window.onbeforeunload = null;
+            window.location.href = '/?action=getFolderZip&doId={{doId}}';
+            clearInterval(downloadCheckInterval)
+        }
+        if (result.status=="error") {
+            $("#cancelDownloadBtn").hide()
+            $("#downloadProgressWidget").hide()
+            $("#redownloadBtn").show()
+            $(".card-title").text("{{gstr('folderAlreadyDownload')}}");
+            clearInterval(downloadCheckInterval)
+        }
+        $("#zipRatioLabel").text(Math.round((result.currentZip / result.total) * 100)+"%");
+        document.getElementById("progressBar").style.width=Math.round((result.currentZip / result.total) * 100) + "%";
+        $("#currentZipCountLabel").text(result.currentZip+" {{gstr('unitFile')}}");
+        $("#remainingLabel").text((result.total - result.currentZip)+" {{gstr('unitFile')}}");
+        $("#totalLabel").text(result.total+" {{gstr('unitFile')}}");
+        $("#timeLeftLabel").text(Math.round(((result.total - result.currentZip) / result.currentZip) * (new Date().getTime() - started_time) / 1000)+"s");
+        $("#speedLabel").text(Math.round(result.currentZip / (new Date().getTime() - started_time) * 1000)+" {{gstr('unitFile')}}/s");
+    }, 500);
+</script>
+{% endblock %}
+      

@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="/?action=getResource&rname=jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="/?action=getResource&rname=materialize.min.css">
+    {% block head %}{% endblock %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{% block pageTitle %}{% endblock %}</title>
+    <link rel="shortcut icon" type="image/jpg" href="/?action=getServerLogo"/>
+  </head>
+  <style>
+    @font-face {
+        font-family: 'Material Icons';
+        font-style: normal;
+        font-weight: 400;
+        src: url(/?action=getResource&rname=MaterialIcons-Regular.eot); /* For IE6-8 */
+        src: local('Material Icons'),
+            local('MaterialIcons-Regular'),
+            url(/?action=getResource&rname=MaterialIcons-Regular.ttf) format('truetype');
+    }
+    .material-icons {
+        font-family: 'Material Icons';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased;
+    }
+    :root{
+    --first-color: #1A73E8;
+    --input-color: black;
+    --border-color: #DADCE0;
+    --body-font: 'Roboto', sans-serif;
+    --normal-font-size: 1rem;
+    --small-font-size: .75rem;
+    }
+    .form__title{
+    font-weight:500;
+    margin-bottom:1rem;
+    color: white;
+    }
+    .form_div{
+    position: relative;
+    height:48px;
+    margin-bottom:1.5rem;
+    }
+    .form__input{
+    position: absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    font-size:var(--normal-font-size);
+    border:1px solid var(--border-color);
+    border-radius: .5rem;
+    outline:none;
+    padding:1rem;
+    background:none;
+    z-index: 1;
+    }
+    .form__label{
+    position: absolute;
+    left:1rem;
+    top:12.5px;
+    padding:0 .25rem;
+    background-color: white;
+    font-size:var(--normal-font-size);
+    transition: .3s;
+    }
+    .form__input:focus + .form__label{
+    top:-.5rem;
+    left:.8rem;
+    color:var(--first-color);
+    font-size: var(--small-font-size);
+    font-weight: 500;
+    z-index: 10;
+    }
+    .form__input:not(:placeholder-shown).form__input:not(:focus)+ .form__label{
+    top:-.5rem;
+    left:.8rem;
+    color:var(--first-color);
+    font-size: var(--small-font-size);
+    font-weight: 500;
+    z-index: 10;
+    }
+    .form__input:focus{
+    border:1.5px solid var(--first-color);
+    }
+    .brand-logo {
+        margin-left: 10px;
+    }
+    .content {
+        margin: 10px;
+    }
+    .dropdown-content {
+        top: 100% !important;
+    }
+    body {
+        background-color: #eee;
+        color:black !important;
+    }
+    body.dark {
+        background-color: #202123;
+        color: white !important;
+    }
+    body.dark .select-dropdown{
+    color: white;
+    }
+    body.dark #searchInput{
+        color: white !important;
+    }
+    body.dark :root {
+        --input-color: white;
+        color: white;
+    }
+    body.dark .back-button-icon {
+        color: white;
+    }
+    body.dark .form__input {
+        color: white;
+    }
+    body.dark .form__label {
+        background-color: #4d4d4f;
+    }
+    body.dark .modal{
+        background-color: #202123;
+        color: #fff;
+    }
+    body.dark .modal-footer{
+        background-color: #202123;
+        color: #fff;
+    }
+    body.dark nav {
+        background-color: #202123;
+    }
+    body.dark .breadcrumb-nav {
+        background-color: #4D4D4F;
+    }
+    body.dark .card {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    body.dark .searchBar {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    body.dark .collapsible {
+        background-color: #4d4d4f !important;
+    }
+    body.dark .collapsible-header {
+        background-color: #4d4d4f !important;
+    }
+    body.dark .searchBar i {
+        color: white !important;
+    }
+    body.dark #search {
+        color: white;
+    }
+    body.dark #search:focus {
+        color: black;
+    }
+    body.dark .btn {
+        background-color: #26A69A;
+    }
+    body.dark .divider {
+        opacity: 0.2;
+    }
+    body.dark .sidenav {
+        background-color: #2D2D31;
+    }
+    body.dark .sidenav li a:not(.subheader) {
+        color: #89B2F5;
+    }
+    body.dark .sidenav li a:not(.subheader):hover {
+        background-color: #3B4043;
+    }
+    body.dark .sidenav li a.subheader {
+        color: #9AA0A6;
+    }
+    body.dark .sidenav li a .material-icons {
+        color: #9AA0A6;
+    }
+    body.dark .collection {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    body.dark .collection .collection-item {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    body.dark .collection-header {
+        color: white !important;
+        background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    body.dark .collection a.collection-item {
+        color: white !important;
+    }
+    body.dark .collection a.collection-item:not(.active):hover {
+        color: #636363 !important;
+        opacity: 1;
+    }
+    body.dark .page-footer{
+        background-color: #202123;
+        color: #fff;
+    }
+    body.dark .material-icons {
+        color: white !important;
+    }
+    body.dark div.material-table table tr td {
+        color: white;
+    }
+    body.dark div.material-table table th.sorting_asc, div.material-table table th.sorting_desc {
+        color: white;
+    }
+    body.dark div.material-table table th {
+        color: white;
+    }
+    body.dark div.material-table .table-footer label {
+        color: white;
+    }
+    body.dark div.material-table .table-footer select option {
+        color: black;
+    }
+    body.dark div.material-table .table-footer select {
+        color: white;
+    }
+    body.dark div.material-table .table-footer {
+        color: white;
+    }
+    body.dark div.material-table .table-title {
+        color: white;
+    }
+    body.dark div.material-table .table-header i {
+        color: white;
+    }
+    body.dark div.material-table .hiddensearch input {
+        color: white !important;
+    }
+    body.dark div.material-table .table-footer .dt-button span span {
+        color: white !important;
+    }
+    body.dark div.material-table table tbody tr:hover {
+        background-color: gray;
+    }
+    body.dark div.material-table table tbody tr td a .material-icons{
+        color: white !important;
+    }
+    body.dark .dropdown-content {
+        top: 100% !important;
+        background-color: #121212;
+        border-color: #121212;
+    }
+    body.dark .file-path {
+        color: white;
+    }
+    body.dark div.material-table .table-footer .material-pagination li a {
+        color: white;
+    }
+    body.dark .btn-flat {
+        color: white;
+    }
+    .alert .card-content span {
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-right: 4px;
+    }
+    .alert .card-content .material-icons {
+        font-size: 1.5em;
+        position: relative;
+        top: 5px;
+        margin-right: 0.5em;
+    }
+    div.material-table {
+        padding: 0;
+    }
+
+    div.material-table .hiddensearch {
+        padding: 0 14px 0 24px;
+        border-bottom: solid 1px #DDDDDD;
+        display: none;
+    }
+
+    div.material-table .hiddensearch input {
+        margin: 0;
+        border: transparent 0 !important;
+        height: 48px;
+        color: rgba(0, 0, 0, .84);
+    }
+
+    div.material-table .hiddensearch input:active {
+        border: transparent 0 !important;
+    }
+
+    div.material-table table {
+        table-layout: fixed;
+    }
+
+    div.material-table .table-header {
+        height: 96px;
+        padding-left: 24px;
+        padding-right: 14px;
+        -webkit-align-items: center;
+        -ms-flex-align: center;
+        align-items: center;
+        display: flex;
+        -webkit-display: flex;
+        border-bottom: solid 1px #DDDDDD;
+    }
+
+    div.material-table .table-header .actions {
+        display: -webkit-flex;
+        margin-left: auto;
+    }
+
+    div.material-table .table-header .btn-flat {
+        min-width: 36px;
+        padding: 0 8px;
+    }
+
+    div.material-table .table-header input {
+        margin: 0;
+        height: auto;
+    }
+
+    div.material-table .table-header i {
+        color: rgba(0, 0, 0, 0.54);
+        font-size: 24px;
+    }
+
+    div.material-table .table-footer {
+        height: 56px;
+        padding-left: 24px;
+        padding-right: 14px;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-direction: row;
+        flex-direction: row;
+        -webkit-justify-content: flex-end;
+        justify-content: flex-end;
+        -webkit-align-items: center;
+        align-items: center;
+        font-size: 12px !important;
+        color: rgba(0, 0, 0, 0.54);
+    }
+
+    div.material-table .table-footer .dataTables_length {
+        display: -webkit-flex;
+        display: flex;
+    }
+
+    div.material-table .table-footer label {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.54);
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-direction: row;
+        /* works with row or column */
+
+        flex-direction: row;
+        -webkit-align-items: center;
+        align-items: center;
+        -webkit-justify-content: center;
+        justify-content: center;
+    }
+
+    div.material-table .table-footer .select-wrapper {
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-direction: row;
+        /* works with row or column */
+
+        flex-direction: row;
+        -webkit-align-items: center;
+        align-items: center;
+        -webkit-justify-content: center;
+        justify-content: center;
+    }
+
+    div.material-table .table-footer .dataTables_info,
+    div.material-table .table-footer .dataTables_length {
+        margin-right: 32px;
+    }
+
+    div.material-table .table-footer .material-pagination {
+        display: flex;
+        -webkit-display: flex;
+        margin: 0;
+    }
+
+    div.material-table .table-footer .material-pagination li:first-child {
+        margin-right: 24px;
+    }
+
+    div.material-table .table-footer .material-pagination li a {
+        color: rgba(0, 0, 0, 0.54);
+    }
+
+    div.material-table .table-footer .select-wrapper input.select-dropdown {
+        margin: 0;
+        border-bottom: none;
+        height: auto;
+        line-height: normal;
+        font-size: 12px;
+        width: 40px;
+        text-align: right;
+    }
+
+    div.material-table .table-footer select {
+        background-color: transparent;
+        width: auto;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        height: auto;
+        margin-left: 20px;
+    }
+
+    div.material-table .table-title {
+        font-size: 20px;
+        color: #000;
+    }
+
+    div.material-table table tr td {
+        padding: 0 0 0 56px;
+        height: 48px;
+        font-size: 13px;
+        color: rgba(0, 0, 0, 0.87);
+        border-bottom: solid 1px #DDDDDD;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    div.material-table table tr td a {
+        color: inherit;
+    }
+
+    div.material-table table tr td a i {
+        font-size: 18px;
+        color: rgba(0, 0, 0, 0.54);
+    }
+
+    div.material-table table tr {
+        font-size: 12px;
+    }
+
+    div.material-table table th {
+        font-size: 12px;
+        font-weight: 500;
+        color: #757575;
+        cursor: pointer;
+        white-space: nowrap;
+        padding: 0;
+        height: 56px;
+        padding-left: 56px;
+        vertical-align: middle;
+        outline: none !important;
+    }
+
+    div.material-table table th.sorting_asc,
+    div.material-table table th.sorting_desc {
+        color: rgba(0, 0, 0, 0.87);
+    }
+
+    div.material-table table th.sorting:after,
+    div.material-table table th.sorting_asc:after,
+    div.material-table table th.sorting_desc:after {
+        font-family: 'Material Icons';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 16px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        word-wrap: normal;
+        -webkit-font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased;
+        content: "arrow_back";
+        -webkit-transform: rotate(90deg);
+        display: none;
+        vertical-align: middle;
+    }
+
+    div.material-table table th.sorting:hover:after,
+    div.material-table table th.sorting_asc:after,
+    div.material-table table th.sorting_desc:after {
+        display: inline-block;
+    }
+
+    div.material-table table th.sorting_desc:after {
+        content: "arrow_forward";
+    }
+
+    div.material-table table tbody tr:hover {
+        background-color: #d9d9d9;
+    }
+    div.material-table table th:first-child,
+    div.material-table table td:first-child {
+        padding: 0 0 0 24px;
+    }
+
+    div.material-table table th:last-child,
+    div.material-table table td:last-child {
+        padding: 0 14px 0 0;
+    }
+
+    div.dt-button-info {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 400px;
+        margin-top: -100px;
+        margin-left: -200px;
+        text-align: center;
+        z-index: 21;
+        color: rgba(0, 0, 0, 0.6);
+    }
+
+    @media screen and (max-width: 640px) {
+    div.dt-buttons {
+        float: none !important;
+        text-align: center;
+    }
+    }
+
+    .btn , .btn-flat{
+        text-transform: none;
+    }
+
+    #accountDropdown {
+        width: 400px !important;
+    }
+    .topProgress{
+        margin: 0 !important;
+        width: 100%;
+        position: fixed;
+        z-index: 999999999;
+        background-color: unset;
+        display: none;
+    }
+    .mobileFileListItem {
+        width: 100% !important;
+        min-height: 65px !important;
+    }
+    .mobileFileListItem:hover {
+        background-color: #2E3336 !important;
+        transition: 0.2s !important;
+    }
+    .isIECard {
+        position: fixed;bottom:0;z-index:99999;padding:0;width:100%;margin:0;display: none;
+    }
+  </style>
+  {% block extraCSS %}
+  {% endblock %}
+  <script>
+    function isIE() {
+        return document.documentMode;
+    }
+    function setCookie(cname, cvalue, exdays) {
+        const d = new Date();
+        d.setTime(d.getTime() + (exdays*24*60*60*1000));
+        let expires = "expires="+ d.toUTCString();
+        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    }
+    function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for(let i = 0; i <ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+    function changeLang(langname) {
+        setCookie("lang",langname,9999)
+        location.reload()
+    }
+    function toggleThemeSwitch() {
+        if (getCookie("theme")=="dark") {
+            setCookie("theme","light",9999)
+            document.body.className=""
+            document.getElementById("themeSwitchButton").innerHTML='<i class="material-icons left"">dark_mode</i>{{gstr("darkMode")}}'
+            document.getElementById("mobileThemeSwitchButton").innerHTML='<i class="material-icons left"">dark_mode</i>{{gstr("darkMode")}}'
+        } else {
+            setCookie("theme","dark",9999)
+            document.body.className="dark"
+            document.getElementById("themeSwitchButton").innerHTML='<i class="material-icons left"">light_mode</i>{{gstr("lightMode")}}'
+            document.getElementById("mobileThemeSwitchButton").innerHTML='<i class="material-icons left"">light_mode</i>{{gstr("lightMode")}}'
+        }
+    }
+  </script>
+  {% block topExtraJS %}
+  {% endblock %}
+  <body>
+    <ul id="dropdown1" class="dropdown-content">
+        {% for lang in supportLang %}
+        <li><a href="javascript:changeLang('{{lang}}')">{{supportLang[lang]}}</a></li>
+        {% endfor %}
+    </ul>
+    <ul id="accountDropdown" class="dropdown-content">
+        {% if current_user.is_authenticated %}
+        <li style="background: none;">
+            <a style="display: flex;align-items: center;">
+                <img src="/?action=getAvatar" alt="" class="circle" width="70" >
+                <div style="margin-left:20px">
+                    <h4 style="font-size: 30px;height: 20px;margin-top: 3px;">{{current_user.name}}</h4>
+                </div>
+            </a>
+        </li>
+        <li><a href="{{request.path}}?action=manageAccount">{{gstr("manageAccount")}}</a></li>
+        <li><a href="/?action=logout&next={{request.full_path}}">{{gstr("logout")}}</a></li>
+        {% else %}
+        <li style="background: none;">
+            <a style="display: flex;align-items: center;">
+                <img src="/?action=getResource&rname=defaultAvatar.png" alt="" class="circle" width="70" >
+                <div style="margin-left:20px">
+                    <h4 style="font-size: 30px;height: 20px;margin-top: 3px;">{{gstr("guest")}}</h4>
+                </div>
+            </a>
+        </li>
+        <li><a href="/?action=login&next={{request.full_path}}">{{gstr("login")}}</a></li>
+        {% endif %}
+    </ul>
+    <ul class="sidenav" id="mobile-menu">
+        <li><div class="user-view">
+            <div class="background">
+              <img src="/?action=getResource&rname=office.jpg">
+            </div>
+            {% if current_user.is_authenticated %}
+            <a href="{{request.path}}?action=manageAccount"><img class="circle" src="/?action=getAvatar"></a>
+            <a href="{{request.path}}?action=manageAccount"><span class="white-text name">{{current_user.name}}</span></a>
+            <a href="{{request.path}}?action=manageAccount"><span class="white-text email"></span></a>
+            {% else %}
+            <a href="#!"><img class="circle" src="/?action=getResource&rname=defaultAvatar.png"></a>
+            <a href="#!"><span class="white-text name">{{gstr("guest")}}</span></a>
+            <a href="#!"><span class="white-text email"></span></a>
+            {% endif %}
+          </div></li>
+        {% if current_user.is_authenticated %}
+        <li><a class="waves-effect" href="/?action=logout&next={{request.full_path}}">{{gstr("logout")}}</a></li>
+        <li><a class="waves-effect" href="{{request.path}}?action=manageAccount">{{gstr("manageAccount")}}</a></li>
+        {% else %}
+        <li><a class="waves-effect" href="/?action=login&next={{request.full_path}}">{{gstr("login")}}</a></li>
+        {% endif %}
+        <li><div class="divider"></div></li>
+        <li><a class="waves-effect" href="javascript:toggleThemeSwitch()" id="mobileThemeSwitchButton"><i class="material-icons">dark_mode</i>{{gstr("darkMode")}}</a></li>
+        <li><a class="waves-effect" href="javascript:$('#mobile-lang-menu').sidenav('open')"><i class="material-icons">language</i>{{supportLang[request.cookies.get("lang",request.accept_languages.best_match(supportLang.keys(),"en_US"))]}}</a></li>
+        {% if current_user.role == "admin" %}
+        <li><div class="divider"></div></li>
+        <li><a class="waves-effect" href="/?action=serverControlPanel"><i class="material-icons">dns</i>{{gstr("serverControlPanel")}}</a></li>
+        {% endif %}
+        <li><div class="divider"></div></li>
+        <li><a class="subheader" style="word-wrap: break-word;
+            white-space: -moz-pre-wrap;
+            white-space: pre-wrap;line-height: 20px;margin-top: 10px;">Server is connect from: {{request.host}}</a></li>
+        <li><div class="divider"></div></li>
+        <li><a class="subheader" style="word-wrap: break-word;
+            white-space: -moz-pre-wrap;
+            white-space: pre-wrap;line-height: 20px;margin-top: 10px;">Powered by ZeroHFS by ZeroApp</a></li>
+    </ul>
+    <ul class="sidenav" id="mobile-lang-menu">
+        <li><a class="subheader">{{gstr("lang")}}</a></li>
+        {% for lang in supportLang %}
+        <li><a href="javascript:changeLang('{{lang}}')">{{supportLang[lang]}}</a></li>
+        {% endfor %}
+    </ul>
+    <div class="progress topProgress">
+        <div class="indeterminate"></div>
+    </div>
+    <div style="background-color:gray;z-index: 899;height: 100%;width: 100%;">
+    </div>
+    <div class="alert card red white-text isIECard">
+        <div class="card-content" style="padding: 15px;">
+          <p><i class="material-icons">report_problem</i><span>{{gstr("ieNotSupportTip")}}</span></p>
+      </div>
+    </div>
+    <div class="navbar-fixed">
+        <nav>
+          <div class="nav-wrapper">
+            <a href="/" class="brand-logo">{{serverName}}</a>
+            <a href="#" data-target="mobile-menu" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+            <ul class="right hide-on-med-and-down">
+                {% if current_user.role == "admin" %}
+                <li><a href="?action=serverControlPanel"><i class="material-icons left">dns</i>{{gstr("serverControlPanel")}}</a></li>
+                {% endif %}
+                <li><a href="javascript:toggleThemeSwitch()" id="themeSwitchButton"><i class="material-icons left">dark_mode</i>{{gstr("darkMode")}}</a></li>
+                <li><a class="dropdown-trigger" href="#!" data-target="dropdown1"><i class="material-icons left">language</i>{{supportLang[request.cookies.get("lang",request.accept_languages.best_match(supportLang.keys(),"en_US"))]}}<i class="material-icons right">arrow_drop_down</i></a></li>
+                {% if current_user.is_authenticated %}
+                <li>
+                    <a class="dropdown-trigger" href="#!" data-target="accountDropdown">
+                        <span class="right">{{current_user.name}}</span>
+                        <i class="valign-wrapper">
+                            <img src="/?action=getAvatar" alt="logo" style="height: 30px;width:30px;margin-right: 5px;" class="responsive-img circle valign-wrapper">
+                        </i>      
+                    </a>
+                </li>
+                {% else %}
+                <li>
+                    <a class="dropdown-trigger" href="#!" data-target="accountDropdown">
+                        <i class="material-icons left">account_circle</i>
+                        {{gstr("guest")}}
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+          </div>
+        </nav>    
+    </div>
+    <div class="content">
+    {% block content %}
+    {% endblock %}
+    </div>
+    <script>
+        if (getCookie("theme")=="dark") {
+            document.body.className="dark"
+            document.getElementById("themeSwitchButton").innerHTML='<i class="material-icons left">light_mode</i>{{gstr("lightMode")}}'
+            document.getElementById("mobileThemeSwitchButton").innerHTML='<i class="material-icons left">light_mode</i>{{gstr("lightMode")}}'
+        } else if (getCookie("theme")=='') {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.className="dark"
+                document.getElementById("themeSwitchButton").innerHTML='<i class="material-icons left">light_mode</i>{{gstr("lightMode")}}'
+                document.getElementById("mobileThemeSwitchButton").innerHTML='<i class="material-icons left">light_mode</i>{{gstr("lightMode")}}'
+            }
+        }
+        window.onload = function(){
+            if (isIE()) {
+                location.href="/?action=IENotSupport"
+            }
+            $('.dropdown-trigger').dropdown();
+            $('.sidenav').sidenav();
+            $('.collapsible').collapsible();
+            var elem = document.querySelector('.collapsible.expandable');
+            var instance = M.Collapsible.init(elem, {
+            accordion: false
+            });         
+            {% block onLoadScript %}
+            {% endblock %}
+        }
+        window.onbeforeunload = function(){
+            document.getElementsByClassName("topProgress")[0].style.display="block"
+        }
+    </script>
+    <script src="/?action=getResource&rname=materialize.min.js"></script>
+    {% block extraJS %}
+    {% endblock %}
+  </body>
+</html>

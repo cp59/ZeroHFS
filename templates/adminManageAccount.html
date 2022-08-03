@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block pageTitle %}{{gstr("manageAccount")}}{% endblock %}
+
+{% block content %}
+<form id="deleteAccountForm" action="/?action=adminDeleteAccount&userId={{request.args.get('userId',current_user.id)}}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+</form>
+<form action="?action=uploadAvatar&userId={{user['userId']}}" id="avatarForm" method="post" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+<div class="card">
+    <div class="card-content">
+        <div style="display:inline-flex">
+            <label for="avatar-file-input">
+                <img src="/?action=getAvatar&userId={{user['userId']}}&rid={{grid(0,1000000000)}}" class="circle" style="width: 120px;height:120px">
+            </label>
+            <h3 style="margin-left: 10px;">{{user["name"]}}</h3>
+            <input id="avatar-file-input" name="avatar-file-input" type="file" onchange="javascript:document.getElementById('avatarForm').submit()" style="display: none;" accept="image/png, image/gif, image/jpeg" />
+        </div>
+        <div class="alert card green white-text">
+            <div class="card-content" style="padding: 15px;">
+              <p><i class="material-icons">help</i><span>{{gstr("uploadAvatarTip")}}</span></p>
+          </div>
+        </div>
+        <div class="alert card amber white-text">
+            <div class="card-content" style="padding: 15px;">
+              <p><i class="material-icons">report_problem</i><span>{{gstr("uploadAvatarCacheTip")|safe}}</span></p>
+          </div>
+        </div>
+    </div>
+</div>
+</form>
+<form action="/?action=adminManageAccount&userId={{request.args.get('userId',current_user.id)}}" method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+<div class="card">
+    <div class="card-content">
+        <span class="card-title">{{gstr("username")}}</span>
+        <p style="height: 5px;"></p>
+        <div class="form_div">
+            <input type="text" class="form__input browser-default" name="username" id="username" value='{{user["name"]}}' required>
+            <label for="" class="form__label browser-default">{{gstr("username")}}</label>
+        </div>
+        <span class="card-title" style="margin-top: -10px;">{{gstr("changePassword")}}</span>
+        <p style="height: 5px;"></p>
+        <div class="form_div">
+            <input type="password" class="form__input browser-default" name="newPassword" id="newPassword" placeholder="{{gstr('changePasswordTip')}}">
+        </div>
+        <button class="btn waves-effect waves-light right-align green" type="submit" name="action">
+            <i class="material-icons left">save</i>
+            {{gstr("save")}}
+          </button>
+          <a href="{{request.path}}" class="btn waves-effect waves-light right-align">
+            <i class="material-icons left">close</i>
+            {{gstr("cancel")}}
+        </a>
+        <a href="javascript:document.getElementById('deleteAccountForm').submit()" class="btn waves-effect waves-light right-align red">
+            <i class="material-icons left">delete</i>
+            {{gstr("delete")}}
+        </a>
+    </div>
+</form>
+{% endblock %}
