@@ -256,6 +256,23 @@ function showFilesOption(file,checkUpload=true) {
     <a href="#!" class="modal-close waves-effect btn red"><i class="material-icons left">close</i>{{gstr("close")}}</a>
   </div>
 </div>
+<form action="?action=newFolder" method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+<div id="newFolderModal" class="modal">
+  <div class="modal-content">
+    <h4>{{gstr("newFolder")}}</h4>
+    <div class="form_div">
+      <input type="text" class="form__input browser-default" id="newFolderName" name="newFolderName" placeholder="{{gstr('newFolderName')}}" required>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn waves-effect waves-light" type="submit" name="action">
+      <i class="material-icons left">create_new_folder</i>{{gstr("newFolder")}}
+    </button>
+          
+  </div>
+</div>
+</form>
 <div id="previewModal" class="modal modal-fixed-footer">
     <div class="modal-content">
       <h4 id="previewModalFilename" style="word-wrap: break-word;
@@ -332,6 +349,7 @@ function showFilesOption(file,checkUpload=true) {
 <ul class="sidenav" id="filesOptionsMenu">
   <li><a href="#" class="search-toggle hide-on-med-and-down waves-effect"><i class="material-icons">search</i>{{gstr("search")}}</a></li>
   {% if canUpload == true %}
+  <li><a href="javascript:$('#filesOptionsMenu').sidenav('close');$('#newFolderModal').modal('open')" class="waves-effect"><i class="material-icons">create_new_folder</i>{{gstr("newFolder")}}</a></li>
   <li><a href="?action=upload" class="waves-effect"><i class="material-icons">upload</i>{{gstr("upload")}}</a></li>
   {% endif %}
   <li><a href="?action=download" class="waves-effect"  id="downloadFolderBtn"><i class="material-icons">download</i>{{gstr("download")}}</a></li>
@@ -354,6 +372,7 @@ function showFilesOption(file,checkUpload=true) {
         <div class="actions">
           <a href="#" class="search-toggle waves-effect btn-flat" style="margin-right: 10px;"><i class="material-icons left">search</i>{{gstr("search")}}</a>
           {% if canUpload == true %}
+          <a href="javascript:$('#newFolderModal').modal('open')" id="newFolderBtn" class="waves-effect btn" style="margin-right: 10px;"><i class="material-icons left white-text">create_new_folder</i>{{gstr("newFolder")}}</a>
           <a href="?action=upload" class="waves-effect btn" style="margin-right: 10px;"><i class="material-icons left white-text">upload</i>{{gstr("upload")}}</a>
           {% endif %}
           <a href="?action=download" id="downloadFolderBtn" class="waves-effect btn" style="margin-right: 10px;"><i class="material-icons left white-text">download</i>{{gstr("download")}}</a>

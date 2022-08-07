@@ -43,7 +43,6 @@ function progressHandler(event) {
     _("loaded_n_total").innerHTML = "Uploaded " + event.loaded + " bytes of " + event.total;
     var percent = (event.loaded / event.total) * 100;
     _("progressBar").style = "width:"+Math.round(percent)+"%";
-    //_("status").innerHTML = Math.round(percent) + "% uploaded... please wait";
     var loaded = event.loaded;
     var total = event.total;
     var progressValue = Math.round( ( loaded / total ) * 100 );

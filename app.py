@@ -10,7 +10,7 @@ print('''
  / /_|  __/ | | (_) | |  | | |    ____) |
 /_____\___|_|  \___/|_|  |_|_|   |_____/ 
 ================================================================
-Version: 0.5 (Insider Edition)
+Version: 0.5.0.5 (Insider Edition)
 Author:ZeroApp Technology Inc.
 Powerd by Python3 Flask Flask-Login Werkzeug Flask-WTF Flask-CORS
 ================================================================
@@ -150,13 +150,15 @@ def custom_404(error):
 downloadFolderProcess={}
 def newDownloadFolderProcess(doId,path,zipfilepath):
     global downloadFolderProcess
-    downloadFolderProcess[doId]={"total":0,"currentZip":0,"zipFilePath":zipfilepath,"doId":doId,"stop":False,"folderPath":path}
+    downloadFolderProcess[doId]={"totalSize":0,"currentDoSize":0,"total":0,"currentZip":0,"zipFilePath":zipfilepath,"doId":doId,"stop":False,"folderPath":path}
     archive=zipfile.ZipFile(zipfilepath, mode="w")
     currentDoCount=0
+    currentDoSize=0
     realPath=getRealPath(path)
     gr=glob(realPath+"/**/*", recursive=True)
     total=len(gr)
-    downloadFolderProcess[doId]={"total":total,"currentZip":currentDoCount,"zipFilePath":zipfilepath,"doId":doId,"stop":False,"folderPath":path}
+    fileSizeList=[os.stat(f).st_size for f in gr]
+    downloadFolderProcess[doId]={"totalSize":sum(fileSizeList),"currentDoSize":currentDoSize,"total":total,"currentZip":currentDoCount,"zipFilePath":zipfilepath,"doId":doId,"stop":False,"folderPath":path}
     for fp in gr:
         archive.write(fp, arcname=fp.replace(realPath, ""))
         if downloadFolderProcess[doId]["stop"]==True:
@@ -164,8 +166,9 @@ def newDownloadFolderProcess(doId,path,zipfilepath):
             os.remove(zipfilepath)
             downloadFolderProcess.pop(doId)
             break
+        currentDoSize+=fileSizeList[currentDoCount]
         currentDoCount+=1
-        downloadFolderProcess[doId]={"total":total,"currentZip":currentDoCount,"zipFilePath":zipfilepath,"doId":doId,"stop":False,"folderPath":path}
+        downloadFolderProcess[doId]={"totalSize":sum(fileSizeList),"currentDoSize":currentDoSize,"total":total,"currentZip":currentDoCount,"zipFilePath":zipfilepath,"doId":doId,"stop":False,"folderPath":path}
     archive.close()
 def getFolderSize(path):
     if os.path.isdir(getRealPath(path))==False:
@@ -381,6 +384,19 @@ def before_req():
             else:
                 flash(gstr("noPermissionToDo"),category="error")
                 return redirect(reqPath)
+    elif action=="newFolder":
+        if request.method=="POST":
+            if checkUserCanUpload(reqPath):
+                if os.path.isdir(freqpath)==False:
+                    return abort(404)
+                newFolderName=request.form.get("newFolderName",request.args.get("newFolderName",""))
+                os.mkdir(os.path.join(freqpath,newFolderName))
+                if request.args.get("format","web")=="json":
+                    return json.dumps({"status":"success"})
+                return redirect(reqPath)
+            else:
+                flash(gstr("noPermissionToDo"),category="error")
+                return redirect(reqPath)
     elif action=="setFilesOptions":
         if current_user.is_authenticated==False:
             return redirect("/?action=login&next="+request.path)
@@ -542,7 +558,7 @@ def before_req():
             return send_file("resources/favicon.png")
         return send_file(configs["serverLogoPath"])
     elif action=="IENotSupport":
-        return gstr("ieNotSupportTip")
+        return render_template("IENotSupport.html")
     else:
         oneTimeAccessToken=request.args.get("oneTimeAccessToken","")
         if oneTimeAccessToken!="" and oneTimeAccessToken in oneTimeAccess.keys():

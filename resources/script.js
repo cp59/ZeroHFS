@@ -209,6 +209,7 @@
   }
   $(document).ready(function() {
     $('#datatable').dataTable({
+      "pageLength":-1,
       "oLanguage": {
         "sEmptyTable":"&emsp;&emsp;{{gstr('noFilesInThisFolder')}}",
         "sZeroRecords":"&emsp;&emsp;{{gstr('noMatchingItems')}}",

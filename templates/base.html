@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <script src="/?action=getResource&rname=pace.min.js"></script>
+    <link rel="stylesheet" href="/?action=getResource&rname=pace-theme-default.min.css">
     <script src="/?action=getResource&rname=jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="/?action=getResource&rname=materialize.min.css">
     {% block head %}{% endblock %}
@@ -678,8 +680,7 @@
     <div class="progress topProgress">
         <div class="indeterminate"></div>
     </div>
-    <div style="background-color:gray;z-index: 899;height: 100%;width: 100%;">
-    </div>
+    <div style="background-color:gray;z-index: 899;height: 100%;width: 100%;"></div>
     <div class="alert card red white-text isIECard">
         <div class="card-content" style="padding: 15px;">
           <p><i class="material-icons">report_problem</i><span>{{gstr("ieNotSupportTip")}}</span></p>
@@ -735,7 +736,8 @@
         }
         window.onload = function(){
             if (isIE()) {
-                location.href="/?action=IENotSupport"
+                location.href="/?action=IENotSupport&next={{request.full_path}}"
+                $(".isIECard").show()
             }
             $('.dropdown-trigger').dropdown();
             $('.sidenav').sidenav();

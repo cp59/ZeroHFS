@@ -94,5 +94,7 @@
     "share":"Share",
     "copied":"Copied",
     "copy":"Copy",
-    "ieNotSupportTip":"ZeroHFS no longer supports Internet Explorer, please use another browser to browse this page!"
+    "ieNotSupportTip":"ZeroHFS no longer supports Internet Explorer, please use another browser to browse this page!",
+    "newFolder":"New folder",
+    "newFolderName":"New folder name"
 }
