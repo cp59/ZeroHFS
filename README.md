@@ -15,14 +15,7 @@ a HTTP file server that based on Python3 and Flask
  - Dedicated App for Android (Currently still in development!)  
 
 ## Screenshots
-![Folder](screenshots/1.png)
-![Manage folder permission](screenshots/2.png)
-![Preview image](screenshots/3.png)
-![Upload progress](screenshots/4.png)
-![Compress and download folder](screenshots/5.png)
-![Server control panel](screenshots/6.png)
-![Light mode supported](screenshots/7.png)
-![Manage current login account](screenshots/8.png)
+![Screenshots](screenshots.png)
 
 ## Installation Guide
 1. Clone this repository first  
