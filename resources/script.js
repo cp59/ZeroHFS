@@ -209,6 +209,11 @@
   }
   $(document).ready(function() {
     $('#datatable').dataTable({
+      "columnDefs": [
+        { "width": "220px", "targets": 1 },
+        { "width": "140px", "targets": 2 },
+        { "width": "180px", "targets": 3 }
+      ],
       "pageLength":-1,
       "oLanguage": {
         "sEmptyTable":"&emsp;&emsp;{{gstr('noFilesInThisFolder')}}",

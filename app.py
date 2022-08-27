@@ -1,6 +1,15 @@
+__author__="梁承樸(Liang Cheng-pu)"
+__credits__ ="梁承樸(Liang Cheng-pu)"
+__copyright__ = "Copyright 2022, ZeroApp "
+__version__="0.5.5 (2022-08-27) (Release)"
+__version_simple__=1
+__email__="noreply.zeroapplication@gmail.com"
+__status__ = "Production"
+__license__ = "MIT"
 import os
 import time
-os.system("title ZeroHFS HttpFileServer")
+from unicodedata import category
+os.system("title ZeroHFS v"+__version__)
 os.system('cls' if os.name == 'nt' else 'clear')
 print('''
  ______              _    _ ______ _____ 
@@ -10,12 +19,12 @@ print('''
  / /_|  __/ | | (_) | |  | | |    ____) |
 /_____\___|_|  \___/|_|  |_|_|   |_____/ 
 ================================================================
-Version: 0.5.0.5 (Insider Edition)
-Author:ZeroApp Technology Inc.
-Powerd by Python3 Flask Flask-Login Werkzeug Flask-WTF Flask-CORS
+Version: '''+__version__+'''
+Author: '''+__author__+'''
+Powered by Python3 Flask Flask-Login Werkzeug Flask-WTF Flask-CORS
 ================================================================
 Importing modules...''')
-from flask import Flask,render_template,request,send_file,render_template_string,redirect,flash,abort,session
+from flask import Flask,render_template,request,send_file,render_template_string,redirect,flash,abort,session,Response
 from flask_login import LoginManager,login_user,logout_user,current_user,UserMixin,AnonymousUserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect,CSRFError
@@ -29,7 +38,9 @@ import zipfile
 import random
 import string
 import json
-import shutil
+import shutil   
+import platform
+import sys
 print("================================================================")
 print("Setting up server...")
 users=[]
@@ -147,6 +158,9 @@ def handle_csrf_error(e):
 @app.errorhandler(404)
 def custom_404(error):
     return render_template("404.html"),404
+@app.errorhandler(500)
+def custom_500(error):
+    return render_template("500.html"),500
 downloadFolderProcess={}
 def newDownloadFolderProcess(doId,path,zipfilepath):
     global downloadFolderProcess
@@ -175,11 +189,12 @@ def getFolderSize(path):
         return "error"
     root_directory = pathlib.Path(getRealPath(path))
     return sizeof_fmt(sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file()))
-def login(usrList,rememberMe=False):
+def login(usrList,rememberMe=False,saveToSessionLists=True):
     session.permanent = rememberMe
     loginSession="".join([random.choice(string.ascii_letters + string.digits) for n in range(128)])
     session["loginSession"]=loginSession
-    loginSessionLists[loginSession]={"userId":usrList["userId"]}
+    if saveToSessionLists:
+        loginSessionLists[loginSession]={"userId":usrList["userId"]}
     open("configs/loginSessions.json","w",encoding="utf-8").write(json.dumps(loginSessionLists))
     reloadData()
     userClass=User()
@@ -199,7 +214,7 @@ def before_req():
     if account!=None and password!=None:
         for user in users:
             if users[user]["name"]==account and check_password_hash(users[user]["password"],password):
-                login(users[user])
+                login(users[user],False,False)
                 isLoginByArgs=True
         if isLoginByArgs==False:
             return json.dumps({"status":"error","msg":"login failed"})
@@ -220,6 +235,21 @@ def before_req():
         if rfile in "script.js":
             return render_template_string(open("resources/"+rfile,encoding="utf-8").read())
         return send_file("resources/"+rfile)
+    elif action=="serverControlPanelAfterRestart":
+        flash(gstr("changesProcessed"), "success")
+        return redirect("/?action=serverControlPanel")
+    elif action=="restartServer":
+        if request.method=="POST":
+            pass
+        if current_user.is_authenticated==False:
+            return redirect("?action=login&next="+request.full_path)
+        if current_user.role!="admin":
+            return abort(401)
+        resp=Response('<meta http-equiv="refresh" content="0; url=/?action=serverControlPanelAfterRestart" />')
+        @resp.call_on_close
+        def doRestart():
+            os.execl(sys.executable, sys.executable, *sys.argv)
+        return resp
     elif action=="getOneTimeAccessToken":
         if checkUserCanAccess(reqPath):
             accessToken="".join(random.sample(string.ascii_letters + string.digits, 32))
@@ -376,6 +406,7 @@ def before_req():
                     os.remove(freqpath)
                 else:
                     return abort(404)
+                flash(gstr("changesProcessed"),category="success")
                 if request.args.get("format","web")=="json":
                     return json.dumps({"status":"success"})
                 if "/".join(reqPath.split("/")[:-1])=="":
@@ -393,6 +424,7 @@ def before_req():
                 os.mkdir(os.path.join(freqpath,newFolderName))
                 if request.args.get("format","web")=="json":
                     return json.dumps({"status":"success"})
+                flash(gstr("changesProcessed"),category="success")
                 return redirect(reqPath)
             else:
                 flash(gstr("noPermissionToDo"),category="error")
@@ -419,6 +451,7 @@ def before_req():
         folderInfo[reqPath]["canDeleteUsers"]=canDeleteUsers
         open("configs/folderInfo.json","w").write(json.dumps(folderInfo))
         reloadData()
+        flash(gstr("changesSaved"),category="success")
         if os.path.isfile(freqpath):
             return redirect("/".join(request.path.split("/")[:-1]))
         return redirect(request.path)
@@ -469,12 +502,18 @@ def before_req():
             return redirect("/?action=login&next=/?action=serverControlPanel")
         if current_user.role!="admin":
             return abort(401)
-        return render_template("serverControlPanel.html",serverName=configs["serverName"],users=users)
+        return render_template("serverControlPanel.html",serverName=configs["serverName"],users=users,serverVersion=__version__,serverVersionSimple=__version_simple__,osVersion=platform.platform(),configVersion=configs["configVersion"])
+    elif action=="getLastVer":
+        return "2"
     elif action=="addUser":
         if current_user.is_authenticated==False:
             return redirect("/?action=login&next=/?action=addUser")
         if current_user.role!="admin":
             return abort(401)
+        for uid in users:
+            if request.form.get("username")==users[uid]["name"]:
+                flash(gstr("usernameAlreadyUsed"),category="error")
+                return render_template("addUser.html")
         if request.method=="POST":
             users[configs["nextUserId"]]={"userId":configs["nextUserId"],"name":request.form.get("username"),"password":generate_password_hash(request.form.get("password")),"role":request.form.get("role",
             "user")}

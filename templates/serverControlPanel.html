@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block pageTitle %}{{gstr("manageAccount")}}{% endblock %}
+{% block pageTitle %}{{gstr("serverControlPanel")}}{% endblock %}
 
 {% block content %}
 {% for message in get_flashed_messages(category_filter=["error"]) %}
@@ -17,6 +17,20 @@
   </div>
 </div>
 {% endfor %}
+<form action="/?action=restartServer" method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+<div id="restartServerModal" class="modal">
+  <div class="modal-content">
+    <h4>{{gstr("restartServerTip")}}</h4>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect btn-flat">{{gstr("cancel")}}</a>
+    <button class="btn waves-effect waves-light red" type="submit" name="action">
+      <i class="material-icons left">refresh</i>{{gstr("restartServer")}}
+    </button>
+  </div>
+</div>
+</form>
 <form id="serverLogoForm" action="/?action=uploadServerLogo" method="post" enctype="multipart/form-data">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 <div class="card">
@@ -30,6 +44,16 @@
             <h5 style="margin-left: 10px;">{{request.host}}</h5>
             </div>
             <input id="server-logo-file-input" name="server-logo-file-input" type="file" onchange="javascript:document.getElementById('serverLogoForm').submit()" style="display: none;" accept="image/png, image/gif, image/jpeg" />
+        </div>
+        <div class="alert card green white-text">
+            <div class="card-content" style="padding: 15px;">
+              <p><i class="material-icons">help</i><span>{{gstr("uploadServerLogoTip")}}</span></p>
+          </div>
+        </div>
+        <div class="alert card amber white-text">
+            <div class="card-content" style="padding: 15px;">
+              <p><i class="material-icons">report_problem</i><span>{{gstr("uploadServerLogoCacheTip")|safe}}</span></p>
+          </div>
         </div>
     </div>
 </div>
@@ -47,4 +71,43 @@
     {% endif %}
     {% endfor %}
 </ul> 
+<ul class="collection with-header">
+  <li class="collection-header"><h4>{{gstr("serverInfo")}}</h4><a class="waves-effect waves-light btn right modal-trigger" href="#restartServerModal" style="margin-top: -49px;"><i class="material-icons left">refresh</i>{{gstr("restartServer")}}</a></li>
+  <li class="collection-item avatar">
+    <i class="material-icons circle blue">update</i>
+    <span class="title">{{gstr("serverVersion")}}</span>
+    <p>{{serverVersion}}</p>
+    <div id="serverVersionLabel"><div class="preloader-wrapper small active" style="height: 20px;width:20px;margin-top: 5px;">
+      <div class="spinner-layer spinner-blue-only">
+        <div class="circle-clipper left">
+          <div class="circle"></div>
+        </div><div class="gap-patch">
+          <div class="circle"></div>
+        </div><div class="circle-clipper right">
+          <div class="circle"></div>
+        </div>
+      </div>
+    </div>&nbsp;<span style="margin-top: 3px;position:absolute">{{gstr("checkingForUpdates")}}</span></div>
+  </li>
+  <li class="collection-item avatar">
+    <i class="material-icons circle blue">settings</i>
+    <span class="title">{{gstr("configVersion")}}</span>
+    <p>V{{configVersion}}</p>
+  </li>
+  <li class="collection-item avatar">
+    <i class="material-icons circle blue">system_update</i>
+    <span class="title">{{gstr("serverOSVersion")}}</span>
+    <p>{{osVersion}}</p>
+  </li>
+</ul> 
+{% endblock %}
+{% block onLoadScript %}
+$(".modal").modal();
+fetch("https://raw.githubusercontent.com/cp59/update-service/main/current_version/zhfs.txt").then(res => res.text()).then(res => {
+  if (parseInt(res)>{{serverVersionSimple}}) {
+    document.getElementById("serverVersionLabel").innerHTML="<b>{{gstr('updateAvailable')}}</b>"
+  } else {
+    document.getElementById("serverVersionLabel").innerHTML="<b>{{gstr('updatedToLatestVersion')}}</b>"
+  }
+})
 {% endblock %}

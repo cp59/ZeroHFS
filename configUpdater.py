@@ -1,3 +1,5 @@
-from werkzeug.security import generate_password_hash
 import json
-input("成功更新設定檔，請啟動ZeroHFS來完成更新。按Enter來關閉程式。")
+c=json.load(open("configs/configs.json"))
+c["configVersion"]=1
+open("configs/configs.json", "w").write(json.dumps(c))
+print("成功更新ZeroHFS伺服器設定檔!")

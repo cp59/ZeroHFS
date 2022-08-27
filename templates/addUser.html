@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block pageTitle %}
-{{gstr("login")}}
+{{gstr("addUser")}}
 {% endblock pageTitle %}
 
 {% block extraCSS %}
@@ -44,7 +44,7 @@
             <form action="/?action=addUser" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="card-content">
-                    <span class="card-title">{{gstr("addUser")}}</span>
+                    <span class="card-title"><a class="waves-effect" style="background-color: transparent;width: 40px;margin-top: -2px;margin-left: -5px;margin-right: 5px;" href="/?action=serverControlPanel"><i class="material-icons center back-button-icon" style="width:100%">arrow_back</i></a>{{gstr("addUser")}}</span>
                     <br />
                     <div class="form_div">
                         <input type="text" class="form__input browser-default" name="username" id="username" required>
