@@ -15,7 +15,7 @@ a HTTP file server that based on Python3 and Flask
  - Dedicated App for Android (Currently still in development!)  
 
 ## Screenshots
-![Screenshots](screenshots.png)
+[![Screenshots](screenshots.png)](https://raw.githubusercontent.com/cp59/ZeroHFS/master/screenshots.png)
 
 ## Installation Guide
 1. Clone this repository first  
