@@ -2,96 +2,281 @@
 
 {% block pageTitle %}{{gstr("serverControlPanel")}}{% endblock %}
 
+{% block topExtraJS %}
+<script>
+  function deleteIP(ip) {
+    $("#deleteIPForm").attr("action", "?action=deleteIPControl&ip=" + ip);
+    document.getElementById("deleteIPForm").submit();
+  }
+  function showFilesOption(file, checkUpload = true) {
+    $("#loadOptionsModal").modal("open");
+    var users = JSON.parse('{{users|tojson}}');
+    if (file.split("/")[file.split("/").length - 1] == "") {
+      $("#filesOptionModalFilename").text("{{request.host}}");
+    } else {
+      $("#filesOptionModalFilename").text(file.split("/")[file.split("/").length - 1]);
+    }
+    document.getElementById("canAccessUsersSelectWidget").innerHTML = "";
+    document.getElementById("canUploadUsersSelectWidget").innerHTML = "";
+    document.getElementById("canDeleteUsersSelectWidget").innerHTML = "";
+    $("#filesOptionForm").attr("action", file + "?action=setFilesOptions");
+    $("#removePermissionSettingForm").attr("action", file + "?action=removeFilesOptions");
+    fetch(file + "?action=getUserPermission")
+      .then(resp => resp.json()).then(resp => {
+        resp[0].userName = "{{gstr('guest')}}";
+        for (var i = 0; i < resp.length; i++) {
+          var userPermission = resp[i];
+          var uid = userPermission.userId;
+          if (userPermission.canAccess) {
+            document.getElementById("canAccessUsersSelectWidget").innerHTML += `<p><label><input type="checkbox" class="filled-in" checked="checked" name="accessUser` + uid + `"/><span>` + userPermission.userName + `</span></label></p>`;
+          } else {
+            document.getElementById("canAccessUsersSelectWidget").innerHTML += `<p><label><input type="checkbox" class="filled-in" name="accessUser` + uid + `"/><span>` + userPermission.userName + `</span></label></p>`;
+          }
+          if (checkUpload) {
+            if (userPermission.canUpload) {
+              document.getElementById("canUploadUsersSelectWidget").innerHTML += `<p><label><input type="checkbox" class="filled-in" checked="checked" name="uploadUser` + uid + `"/><span>` + userPermission.userName + `</span></label></p>`;
+            } else {
+              document.getElementById("canUploadUsersSelectWidget").innerHTML += `<p><label><input type="checkbox" class="filled-in" name="uploadUser` + uid + `"/><span>` + userPermission.userName + `</span></label></p>`;
+            }
+          }
+          if (userPermission.canDelete) {
+            document.getElementById("canDeleteUsersSelectWidget").innerHTML += `<p><label><input type="checkbox" class="filled-in" checked="checked" name="deleteUser` + uid + `"/><span>` + userPermission.userName + `</span></label></p>`;
+          } else {
+            document.getElementById("canDeleteUsersSelectWidget").innerHTML += `<p><label><input type="checkbox" class="filled-in" name="deleteUser` + uid + `"/><span>` + userPermission.userName + `</span></label></p>`;
+          }
+        }
+        $("#loadOptionsModal").modal("close");
+        $("#filesOptionModal").modal("open");
+      });
+  }
+</script>
+{% endblock %}
+
 {% block content %}
+<div class="modal bottom-sheet" id="loadOptionsModal" style="padding: 0;">
+  <div class="modal-content">
+    <h4>{{gstr("loadingOptions")}}</h4>
+  </div>
+  <div class="progress" style="background-color: unset;margin:0">
+    <div class="indeterminate"></div>
+  </div>
+</div>
+<div id="filesOptionModal" class="modal modal-fixed-footer bottom-sheet">
+  <form method="post" id="removePermissionSettingForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  </form>
+  <form method="post" id="filesOptionForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="modal-content">
+      <h4 id="filesOptionModalFilename" style="word-wrap: break-word;
+        white-space: -moz-pre-wrap;
+        white-space: pre-wrap;">No File is current settings</h4>
+      <ul class="collapsible">
+        {% if current_user.role=="admin" %}
+        <li id="canAccessUsersSelectWidgetLi">
+          <div class="collapsible-header"><i class="material-icons">visibility</i>{{gstr("canAccessUsers")}}</div>
+          <div class="collapsible-body" id="canAccessUsersSelectWidget">
+
+          </div>
+        </li>
+        <li id="canUploadUsersSelectWidgetLi">
+          <div class="collapsible-header"><i class="material-icons">upload</i>{{gstr("canUploadUsers")}}</div>
+          <div class="collapsible-body" id="canUploadUsersSelectWidget">
+
+          </div>
+        </li>
+        <li id="canDeleteUsersSelectWidgetLi">
+          <div class="collapsible-header"><i class="material-icons">delete</i>{{gstr("canDeleteUsers")}}</div>
+          <div class="collapsible-body" id="canDeleteUsersSelectWidget">
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+
+    </div>
+    <div class="modal-footer" id="filesOptionModalFooter">
+      <a class="modal-close waves-effect btn-flat">{{gstr("close")}}</a>
+      <a class="waves-effect btn red"
+        href="javascript:document.getElementById('removePermissionSettingForm').submit()"><i
+          class="material-icons left">remove_circle</i>{{gstr("removeThisPermissionSetting")}}</a>
+      <button class="btn waves-effect waves-light green" type="submit" name="action">
+        <i class="material-icons left">save</i>{{gstr("save")}}
+      </button>
+    </div>
+  </form>
+</div>
+
 {% for message in get_flashed_messages(category_filter=["error"]) %}
 <div class="alert card red white-text">
-    <div class="card-content">
-      <p><i class="material-icons">report</i><span>{{message}}</span></p>
+  <div class="card-content">
+    <p><i class="material-icons">report</i><span>{{message}}</span></p>
   </div>
 </div>
 {% endfor %}
 {% for message in get_flashed_messages(category_filter=["success"]) %}
 <div class="alert card green white-text">
-    <div class="card-content">
-      <p><i class="material-icons">check_circle</i><span>{{message}}</span></p>
+  <div class="card-content">
+    <p><i class="material-icons">check_circle</i><span>{{message}}</span></p>
   </div>
 </div>
 {% endfor %}
 <form action="/?action=restartServer" method="post">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-<div id="restartServerModal" class="modal">
-  <div class="modal-content">
-    <h4>{{gstr("restartServerTip")}}</h4>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <div id="restartServerModal" class="modal bottom-sheet">
+    <div class="modal-content">
+      <h4>{{gstr("restartServerTip")}}</h4>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close waves-effect btn-flat">{{gstr("cancel")}}</a>
+      <button class="btn waves-effect waves-light red" type="submit" name="action">
+        <i class="material-icons left">refresh</i>{{gstr("restartServer")}}
+      </button>
+    </div>
   </div>
-  <div class="modal-footer">
-    <a href="#!" class="modal-close waves-effect btn-flat">{{gstr("cancel")}}</a>
-    <button class="btn waves-effect waves-light red" type="submit" name="action">
-      <i class="material-icons left">refresh</i>{{gstr("restartServer")}}
-    </button>
-  </div>
-</div>
 </form>
 <form id="serverLogoForm" action="/?action=uploadServerLogo" method="post" enctype="multipart/form-data">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-<div class="card">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <div class="card">
     <div class="card-content">
-        <div style="display:inline-flex">
-            <label for="server-logo-file-input">
-              <img src="/?action=getServerLogo&rid={{grid(0,1000000000)}}" style="height:120px">
-            </label>
-            <div style="display: inline;margin-left: 10px;">
-            <h4 style="margin-left: 10px;">{{serverName}}</h4>
-            <h5 style="margin-left: 10px;">{{request.host}}</h5>
-            </div>
-            <input id="server-logo-file-input" name="server-logo-file-input" type="file" onchange="javascript:document.getElementById('serverLogoForm').submit()" style="display: none;" accept="image/png, image/gif, image/jpeg" />
+      <div style="display:inline-flex">
+        <label for="server-logo-file-input">
+          <img src="/?action=getServerLogo&rid={{grid(0,1000000000)}}" style="height:120px">
+        </label>
+        <div style="display: inline;margin-left: 10px;">
+          <h4 style="margin-left: 10px;">{{serverName}}</h4>
+          <h5 style="margin-left: 10px;">{{request.host}}</h5>
         </div>
-        <div class="alert card green white-text">
-            <div class="card-content" style="padding: 15px;">
-              <p><i class="material-icons">help</i><span>{{gstr("uploadServerLogoTip")}}</span></p>
-          </div>
+        <input id="server-logo-file-input" name="server-logo-file-input" type="file"
+          onchange="javascript:document.getElementById('serverLogoForm').submit()" style="display: none;"
+          accept="image/png, image/gif, image/jpeg" />
+      </div>
+      <div class="alert card green white-text">
+        <div class="card-content" style="padding: 15px;">
+          <p><i class="material-icons">help</i><span>{{gstr("uploadServerLogoTip")}}</span></p>
         </div>
-        <div class="alert card amber white-text">
-            <div class="card-content" style="padding: 15px;">
-              <p><i class="material-icons">report_problem</i><span>{{gstr("uploadServerLogoCacheTip")|safe}}</span></p>
-          </div>
+      </div>
+      <div class="alert card amber white-text">
+        <div class="card-content" style="padding: 15px;">
+          <p><i class="material-icons">report_problem</i><span>{{gstr("uploadServerLogoCacheTip")|safe}}</span></p>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 </form>
+<form method="post" id="deleteIPForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+</form>
+<div class="modal bottom-sheet" id="addIPModal">
+  <form action="?action=addIPControl" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="modal-content">
+      <h4>{{gstr("addIP")}}</h4>
+      <div class="form_div">
+        <input type="text" minlength="7" maxlength="15" size="15"
+          pattern="^((\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$"
+          class="form__input browser-default" id="ip" name="ip" placeholder="IP" required>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <a class="modal-close waves-effect btn red"><i class="material-icons left">close</i>{{gstr("close")}}</a>
+      <button class="btn waves-effect waves-light" type="submit" name="action"><i
+          class="material-icons left">add</i>{{gstr("addIP")}}</button>
+    </div>
+  </form>
+</div>
 <ul class="collection with-header">
-    <li class="collection-header"><h4>{{gstr("manageUsers")}}</h4><a href="/?action=addUser" class="waves-effect waves-light btn right" style="margin-top: -49px;"><i class="material-icons left">add</i>{{gstr("addUser")}}</a></li>
-    {% for user in users %}
-    {% if loop.index != 1 %}
-    <li class="collection-item avatar">
-      <img src="/?action=getAvatar&userId={{user}}&rid={{grid(0,1000000000)}}" alt="" class="circle">
-      <span class="title">{{users[user]["name"]}}</span>
-      <p>{{users[user]["role"]}}<br></p>
-      <a href="/?action=adminManageAccount&userId={{user}}" class="secondary-content waves-effect waves-light btn-flat"><i class="material-icons">edit</i></a>
+  <li class="collection-header">
+    <h4>{{gstr("manageUsers")}}</h4><a href="/?action=addUser" class="waves-effect waves-light btn right"
+      style="margin-top: -49px;"><i class="material-icons left">add</i>{{gstr("addUser")}}</a>
+  </li>
+  {% for user in users %}
+  {% if loop.index != 1 %}
+  <li class="collection-item avatar">
+    <img src="/?action=getAvatar&userId={{user}}&rid={{grid(0,1000000000)}}" alt="" class="circle">
+    <span class="title">{{users[user]["name"]}}</span>
+    <p>{{users[user]["role"]}}<br></p>
+    <a href="/?action=adminManageAccount&userId={{user}}" class="secondary-content waves-effect waves-light btn"><i
+        class="material-icons">manage_accounts</i></a>
+  </li>
+  {% endif %}
+  {% endfor %}
+</ul>
+<ul class="collection with-header">
+  <li class="collection-header">
+    <h4>{{gstr("folderOrFilesOptions")}}</h4>
+  </li>
+  {% for finfo in folderInfo %}
+  <li class="collection-item avatar">
+    <i class="material-icons circle blue">folder</i>
+    <span class="title">{{finfo}}</span>
+    <a class="waves-effect waves-light btn secondary-content"
+      onclick="showFilesOption('{{finfo}}',{% if isfolder(finfo) %}true{% else %}false{% endif %})"><i
+        class="material-icons" style="color: white;">tune</i></a>
+  </li>
+  {% endfor %}
+</ul>
+<ul class="collection with-header">
+  <li class="collection-header">
+    <h4>{{gstr("ipAccessControl")}}</h4><a onclick="$('#addIPModal').modal('open')"
+      class="waves-effect waves-light btn right" style="margin-top: -49px;"><i
+        class="material-icons left">add</i>{{gstr("addIP")}}</a>
+  </li>
+  {% set ips = ipAccessControl["ips"] %}
+  {% for ip in ips %}
+  <li class="collection-item">
+    <span class="title" style="line-height: 35px;">{{ip}}</span>
+    <a onclick="deleteIP('{{ip}}')" class="secondary-content waves-effect waves-light btn red"><i
+        class="material-icons">delete</i></a>
+  </li>
+  {% endfor %}
+  <form action="" method="post" id="ipAccessControlModeForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <li class="collection-item">
+      <div>&emsp;
+        <div class="switch right" style="display: inline;">
+          <label>
+            {{gstr("blacklistMode")}}
+            <input name="whitelistMode" type="checkbox"
+              onchange="document.getElementById('ipAccessControlModeForm').setAttribute('action','?action=changeIPAccessControlMode&lastScrollY='+window.scrollY);document.getElementById('ipAccessControlModeForm').submit();"
+              {% if ipAccessControl['mode']==1 %} checked{% endif %}>
+            <span class="lever"></span>
+            {{gstr("whitelistMode")}}
+          </label>
+        </div>
+
+      </div>
     </li>
-    {% endif %}
-    {% endfor %}
-</ul> 
+  </form>
+</ul>
 <ul class="collection with-header">
-  <li class="collection-header"><h4>{{gstr("serverInfo")}}</h4><a class="waves-effect waves-light btn right modal-trigger" href="#restartServerModal" style="margin-top: -49px;"><i class="material-icons left">refresh</i>{{gstr("restartServer")}}</a></li>
+  <li class="collection-header">
+    <h4>{{gstr("serverInfo")}}</h4><a class="waves-effect waves-light btn right modal-trigger"
+      href="#restartServerModal" style="margin-top: -49px;"><i
+        class="material-icons left">refresh</i>{{gstr("restartServer")}}</a>
+  </li>
   <li class="collection-item avatar">
     <i class="material-icons circle blue">update</i>
     <span class="title">{{gstr("serverVersion")}}</span>
     <p>{{serverVersion}}</p>
-    <div id="serverVersionLabel"><div class="preloader-wrapper small active" style="height: 20px;width:20px;margin-top: 5px;">
-      <div class="spinner-layer spinner-blue-only">
-        <div class="circle-clipper left">
-          <div class="circle"></div>
-        </div><div class="gap-patch">
-          <div class="circle"></div>
-        </div><div class="circle-clipper right">
-          <div class="circle"></div>
+    <div id="serverVersionLabel">
+      <div class="preloader-wrapper small active" style="height: 20px;width:20px;margin-top: 5px;">
+        <div class="spinner-layer spinner-blue-only">
+          <div class="circle-clipper left">
+            <div class="circle"></div>
+          </div>
+          <div class="gap-patch">
+            <div class="circle"></div>
+          </div>
+          <div class="circle-clipper right">
+            <div class="circle"></div>
+          </div>
         </div>
-      </div>
-    </div>&nbsp;<span style="margin-top: 3px;position:absolute">{{gstr("checkingForUpdates")}}</span></div>
+      </div>&nbsp;<span style="margin-top: 3px;position:absolute">{{gstr("checkingForUpdates")}}</span>
+    </div>
   </li>
   <li class="collection-item avatar">
     <i class="material-icons circle blue">settings</i>
-    <span class="title">{{gstr("configVersion")}}</span>
+    <span class="title">{{gstr("serverConfigVersion")}}</span>
     <p>V{{configVersion}}</p>
   </li>
   <li class="collection-item avatar">
@@ -99,15 +284,22 @@
     <span class="title">{{gstr("serverOSVersion")}}</span>
     <p>{{osVersion}}</p>
   </li>
-</ul> 
+</ul>
 {% endblock %}
 {% block onLoadScript %}
+var url = new URL(location.href);
+var lastScrollY = url.searchParams.get("lastScrollY");
+if (lastScrollY != null) {
+window.scrollTo(0,lastScrollY)
+}
 $(".modal").modal();
-fetch("https://raw.githubusercontent.com/cp59/update-service/main/current_version/zhfs.txt").then(res => res.text()).then(res => {
-  if (parseInt(res)>{{serverVersionSimple}}) {
-    document.getElementById("serverVersionLabel").innerHTML="<b>{{gstr('updateAvailable')}}</b>"
-  } else {
-    document.getElementById("serverVersionLabel").innerHTML="<b>{{gstr('updatedToLatestVersion')}}</b>"
-  }
+$("#loadOptionsModal").modal({"dismissible":false})
+fetch("https://raw.githubusercontent.com/cp59/update-service/main/current_version/zhfs.txt").then(res =>
+res.text()).then(res => {
+if (parseInt(res)>{{serverVersionSimple}}) {
+document.getElementById("serverVersionLabel").innerHTML="<b>{{gstr('updateAvailable')}}</b>"
+} else {
+document.getElementById("serverVersionLabel").innerHTML="<b>{{gstr('updatedToLatestVersion')}}</b>"
+}
 })
 {% endblock %}

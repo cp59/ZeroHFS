@@ -1,11 +1,8 @@
+{% set folderMode = true %}
 {% extends "base.html" %}
 
 {% block pageTitle %}
-{% if request.path[-1]=="/" %}
-{{request.host}}{{request.path[:-1]}}
-{% else %}
-{{request.host}}{{request.path}}
-{% endif %}
+{{request.path}}
 {% endblock %}
 
 {% block head %}
@@ -14,262 +11,98 @@
 {% endblock %}
 
 {% block topExtraJS %}
-<script>
-function previewVideo(file){
-    filename=file.split("/")[file.split("/").length-1]
-    document.getElementById("modalDownloadAction").setAttribute("href",file)
-    document.getElementById("modalShareAction").setAttribute("href","javascript:openShareModal('"+file+"')")
-    document.getElementById("previewModalFilename").innerHTML=filename
-    document.getElementById("previewModalFrame").innerHTML=`
-<video style='height:365px' controls autoplay>
-<source src="`+file+`" type="video/mp4">
-Your browser does not support the video tag.
-</video>
-    `;
-    $("#previewModal").modal("open")
-}
-function previewAudio(file){
-    filename=file.split("/")[file.split("/").length-1]
-    document.getElementById("modalDownloadAction").setAttribute("href",file)
-    document.getElementById("modalShareAction").setAttribute("href","javascript:openShareModal('"+file+"')")
-    document.getElementById("previewModalFilename").innerHTML=filename
-    document.getElementById("previewModalFrame").innerHTML=`
-<audio style='width:100%' controls autoplay>
-<source src="`+file+`" type="audio/mp3">
-Your browser does not support the audio tag.
-</video>
-    `;
-    $("#previewModal").modal("open")
-}
-function previewImage(file){
-    filename=file.split("/")[file.split("/").length-1]
-    document.getElementById("modalDownloadAction").setAttribute("href",file)
-    document.getElementById("modalShareAction").setAttribute("href","javascript:openShareModal('"+file+"')")
-    document.getElementById("previewModalFilename").innerHTML=filename
-    document.getElementById("previewModalFrame").innerHTML="<img class='materialboxed' style='height:370px' src='"+file+"'/>"
-    $('.materialboxed').materialbox();
-    $("#previewModal").modal("open")
-}
-function previewTextFile(file){
-    filename=file.split("/")[file.split("/").length-1]
-    document.getElementById("modalDownloadAction").setAttribute("href",file)
-    document.getElementById("modalShareAction").setAttribute("href","javascript:openShareModal('"+file+"')")
-    document.getElementById("previewModalFilename").innerHTML=filename
-    fetch(file).then(resp=>resp.text()).then(resp=>{
-        document.getElementById("previewModalFrame").innerHTML="<blockquote>"+resp.replace(/(?:\r\n|\r|\n)/g, '<br />');+"</blockquote>";
-    })
-    $("#previewModal").modal("open")
-}
-function mobileCopyTable() {
-    $('#filesOptionsMenu').sidenav('close')
-    $("#largeTable").removeClass("hide-on-med-and-down")
-    $('.buttons-copy').click()
-    $("#largeTable").addClass("hide-on-med-and-down")
-}
-function openShareModal(url) {
-  surl="{{request.host_url}}"+url.substring(1)
-  document.getElementById("copyUrlInput").value=surl
-  document.getElementById("shareToFacebookBtn").setAttribute("href","https://www.facebook.com/sharer.php?u="+surl)
-  document.getElementById("shareToRedditBtn").setAttribute("href","https://reddit.com/submit?url="+surl)
-  document.getElementById("shareToTwitterBtn").setAttribute("href","https://twitter.com/share?url="+surl)
-  $("#shareQrc").qrcode(surl)
-  $("#previewModal").modal("close")
-  $("#shareModal").modal("open")
-}
-function copyShareUrl() {
-  var copyUrlInput = document.getElementById("copyUrlInput");
-  copyUrlInput.select();
-  document.execCommand("copy");
-  var copyUrl = copyUrlInput.value
-  copyUrlInput.value=""
-  copyUrlInput.value=copyUrl
-  document.getElementById("copyShareUrlBtn").innerHTML="<i class='material-icons left'>done</i>{{gstr('copied')}}"
-  document.getElementById("copyShareUrlBtn").classList.add("green")
-  setTimeout(function(){
-    document.getElementById("copyShareUrlBtn").innerHTML="<i class='material-icons left'>content_copy</i>{{gstr('copy')}}"
-    document.getElementById("copyShareUrlBtn").classList.remove("green")
-  },2000)
-}
-function showFilesOption(file,checkUpload=true) {
-  doReq=0;
-  {% if current_user.role == "admin" %}
-  if (checkUpload) {
-    allReq=4
-  } else {
-    allReq=3
-  }
-  {% else %}
-  allReq=1
-  {% endif %}
-  $('#filesOptionsMenu').sidenav('close')
-  $("#loadOptionsModal").modal("open")
-  var users=JSON.parse('{{users|tojson}}')
-  if (file.split("/")[file.split("/").length-1]=="") {
-    $("#filesOptionModalFilename").text("{{request.host}}")
-  } else {
-    $("#filesOptionModalFilename").text(file.split("/")[file.split("/").length-1])
-  }
-  fetch(file+"?action=checkUserCanDelete").then(resp=>resp.text()).then(resp=>{
-    if (resp=="1") {
-      $("#deleteFilesLi").show()
-      $("#deleteForm").attr("action",file+"?action=delete")
-    } else {
-      $("#deleteFilesLi").hide()
-    }
-    doReq++
-    if (doReq==allReq) {
-      $("#loadOptionsModal").modal("close")
-      $("#filesOptionModal").modal("open")
-    }
-  })
-  {% if current_user.role == "admin" %}
-  document.getElementById("canAccessUsersSelectWidget").innerHTML="";
-  document.getElementById("canUploadUsersSelectWidget").innerHTML="";
-  document.getElementById("canDeleteUsersSelectWidget").innerHTML="";
-  $("#filesOptionForm").attr("action",file+"?action=setFilesOptions")
-  fetch(file+"?action=checkUserCanAccess&userId={{','.join(users.keys()|list)}}")
-  .then(resp=>resp.json()).then(resp=>{
-    var i = 0;
-    $.each(users, function(key, value) { 
-      if (key==0) {
-        value["name"]="{{gstr('guest')}}"
-      }
-      if (resp[i]) {
-        document.getElementById("canAccessUsersSelectWidget").innerHTML+=`
-        <p>
-          <label>
-            <input type="checkbox" class="filled-in" checked="checked" name="accessUser`+key+`"/>
-            <span>`+value["name"]+`</span>
-          </label>
-        </p>
-        `
-      } else {
-        document.getElementById("canAccessUsersSelectWidget").innerHTML+=`
-        <p>
-          <label>
-            <input type="checkbox" class="filled-in" name="accessUser`+key+`"/>
-            <span>`+value["name"]+`</span>
-          </label>
-        </p>
-        `
-      }
-      i++;
-    })
-    doReq++
-    if (doReq==allReq) {
-      $("#loadOptionsModal").modal("close")
-      $("#filesOptionModal").modal("open")
-    }
-  })
-  if (checkUpload) {
-    $("#canUploadUsersSelectWidgetLi").show()
-    fetch(file+"?action=checkUserCanUpload&userId={{','.join(users.keys()|list)}}")
-    .then(resp=>resp.json()).then(resp=>{
-      var i=0;
-      $.each(users, function(key, value) { 
-        if (key==0) {
-          value["name"]="{{gstr('guest')}}"
-        }
-        if (resp[i]) {
-          document.getElementById("canUploadUsersSelectWidget").innerHTML+=`
-          <p>
-            <label>
-              <input type="checkbox" class="filled-in" checked="checked" name="uploadUser`+key+`"/>
-              <span>`+value["name"]+`</span>
-            </label>
-          </p>
-          `
-        } else {
-          document.getElementById("canUploadUsersSelectWidget").innerHTML+=`
-          <p>
-            <label>
-              <input type="checkbox" class="filled-in" name="uploadUser`+key+`"/>
-              <span>`+value["name"]+`</span>
-            </label>
-          </p>
-          `
-        }
-        i++;
-      })
-      doReq++
-      if (doReq==allReq) {
-        $("#loadOptionsModal").modal("close")
-        $("#filesOptionModal").modal("open")
-      }
-    })
-  } else {
-    $("#canUploadUsersSelectWidgetLi").hide()
-  }
-  fetch(file+"?action=checkUserCanDelete&userId={{','.join(users.keys()|list)}}")
-  .then(resp=>resp.json()).then(resp=>{
-    var i=0;
-    $.each(users, function(key, value) { 
-      if (key==0) {
-        value["name"]="{{gstr('guest')}}"
-      }
-      if (resp[i]) {
-        document.getElementById("canDeleteUsersSelectWidget").innerHTML+=`
-        <p>
-          <label>
-            <input type="checkbox" class="filled-in" checked="checked" name="deleteUser`+key+`"/>
-            <span>`+value["name"]+`</span>
-          </label>
-        </p>
-        `
-      } else {
-        document.getElementById("canDeleteUsersSelectWidget").innerHTML+=`
-        <p>
-          <label>
-            <input type="checkbox" class="filled-in" name="deleteUser`+key+`"/>
-            <span>`+value["name"]+`</span>
-          </label>
-        </p>
-        `
-      }
-      i++;
-    })
-    doReq++
-    if (doReq==allReq) {
-      $("#loadOptionsModal").modal("close")
-      $("#filesOptionModal").modal("open")
-    }
-  })
-  {% else %}
-  $("#canAccessUsersSelectWidgetLi").hide()
-  $("#canUploadUsersSelectWidgetLi").hide()
-  $("#canDeleteUsersSelectWidgetLi").hide()
-  $("#filesOptionModalFooter").hide()
-  {% endif %}
-}
-</script>
+<script src="/?action=getResource&rname=folderView.js"></script>
+{% endblock %}
+
+{% block deskNavAction %}
+<li><a href="#" class="search-toggle hide-on-med-and-down" title="{{gstr('search')}}"><i
+      class="material-icons center">search</i></a></li>
+<li><a id="tableNewFolderBtn" onclick="$('#newFolderModal').modal('open')" id="newFolderBtn"
+    title="{{gstr('newFolder')}}"><i class="material-icons center">create_new_folder</i></a></li>
+<li><a class="dropdown-trigger " href="#!" data-target="uploadDropdown" title="{{gstr('upload')}}"
+    id="tableUploadBtn"><i class="material-icons center">upload</i></a>
+</li>
+<li><a href="?action=download" id="tableDownloadFolderBtn" title="{{gstr('download')}}"><i
+      class="material-icons center">download</i></a></li>
+{% if current_user.role == "admin" %}
+<li><a id="tableFilePropertiesBtn" title="{{gstr('properties')}}"><i class="material-icons center">rule_folder</i></a>
+</li>
+{% endif %}
+{% endblock %}
+
+{% block contentNoPadding %}
+<input type="file" id="tableUploadInput" onchange="upload();" multiple="multiple" style="display: none;">
+<input type="file" id="tableUploadFolderInput" onchange="uploadFolder()" style="display: none;" webkitdirectory
+  mozdirectory>
+<ul id='uploadDropdown' class='dropdown-content'>
+  <li><a onclick="document.getElementById('tableUploadInput').click()">
+      <i class="material-icons left">upload_file</i>
+      {{gstr("uploadFile")}}
+    </a></li>
+  <li><a onclick="document.getElementById('tableUploadFolderInput').click()">
+      <i class="material-icons left">drive_folder_upload</i>
+      {{gstr("uploadFolder")}}
+    </a></li>
+</ul>
+<ul id='uploadSidenav' class='sidenav'>
+  <li><a class="waves-effect" onclick="document.getElementById('tableUploadInput').click()">
+      <i class="material-icons left">upload_file</i>
+      {{gstr("uploadFile")}}
+    </a></li>
+  <li><a class="waves-effect" onclick="document.getElementById('tableUploadFolderInput').click()">
+      <i class="material-icons left">drive_folder_upload</i>
+      {{gstr("uploadFolder")}}
+    </a></li>
+</ul>
+<ul id="pathNavSidenav" class="sidenav">
+
+</ul>
+{% endblock %}
+
+{% block navContent %}
+<div class="col s12" style="overflow: hidden;
+      white-space: nowrap;margin-right: 20px;margin-left: 10px;" id="tableBreadcrumbDiv">
+  <a id="morePathNavButton" class='sidenav-trigger breadcrumb' style="cursor: pointer;display: block;margin: 2px;"
+    data-target='pathNavSidenav'>.....</a>
+</div>
 {% endblock %}
 
 {% block content %}
 {% for message in get_flashed_messages(category_filter=["error"]) %}
 <div class="alert card red white-text">
-    <div class="card-content">
-      <p><i class="material-icons">report</i><span>{{message}}</span></p>
+  <div class="card-content">
+    <p><i class="material-icons">report</i><span>{{message}}</span></p>
   </div>
 </div>
 {% endfor %}
 {% for message in get_flashed_messages(category_filter=["success"]) %}
 <div class="alert card green white-text">
-    <div class="card-content">
-      <p><i class="material-icons">check_circle</i><span>{{message}}</span></p>
+  <div class="card-content">
+    <p><i class="material-icons">check_circle</i><span>{{message}}</span></p>
   </div>
 </div>
 {% endfor %}
-<div id="shareModal" class="modal modal-fixed-footer">
+<div id="dropFileTipModal" class="modal bottom-sheet">
+  <div class="modal-content">
+    <h5><b>{{gstr("dropFileTip")}}</b></h5>
+  </div>
+</div>
+<div id="shareModal" class="modal modal-fixed-footer bottom-sheet">
   <div class="modal-content">
     <h4>{{gstr("share")}}</h4>
-    <a class="waves-effect waves-light social-icon btn-large facebook" id="shareToFacebookBtn"><i class="fa fa-facebook"></i></a>
-    <a class="waves-effect waves-light social-icon btn-large reddit" id="shareToRedditBtn"><i class="fa fa-reddit"></i></a>
-    <a class="waves-effect waves-light social-icon btn-large twitter" id="shareToTwitterBtn"><i class="fa fa-twitter"></i></a>      
+    <a class="waves-effect waves-light social-icon btn-large facebook" id="shareToFacebookBtn"><i
+        class="fa fa-facebook"></i></a>
+    <a class="waves-effect waves-light social-icon btn-large reddit" id="shareToRedditBtn"><i
+        class="fa fa-reddit"></i></a>
+    <a class="waves-effect waves-light social-icon btn-large twitter" id="shareToTwitterBtn"><i
+        class="fa fa-twitter"></i></a>
     <div style="display: flex;margin-top: 10px;">
-    <div class="form_div" id="copyUrlDiv" style="width: calc(100% - 130px);">
-      <input type="text" class="form__input browser-default" id="copyUrlInput" readonly>
-    </div>
-    <a id="copyShareUrlBtn" href="javascript:copyShareUrl()" style="width: 120px;margin-left: 10px;height: 48px;padding-top: 6px;" class="btn waves-effect waves-light"><i class="material-icons left">content_copy</i>{{gstr("copy")}}</a>
+      <div class="form_div" id="copyUrlDiv" style="width: 100%;">
+        <input type="text" class="form__input browser-default" id="copyUrlInput" readonly>
+      </div>
+      <a id="copyShareUrlBtn" onclick="copyShareUrl()"
+        style="width:60px;margin-left: 5px;height: 48px;padding-top: 6px;" class="btn waves-effect waves-light"><i
+          class="material-icons center">content_copy</i></a>
     </div>
     <div id="shareQrc" style="padding: 10px;background-color:white;width: 276px;"></div>
   </div>
@@ -277,224 +110,167 @@ function showFilesOption(file,checkUpload=true) {
     <a href="#!" class="modal-close waves-effect btn red"><i class="material-icons left">close</i>{{gstr("close")}}</a>
   </div>
 </div>
-<form action="?action=newFolder" method="post">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-<div id="newFolderModal" class="modal">
+<div id="newFolderModal" class="modal bottom-sheet">
   <div class="modal-content">
     <h4>{{gstr("newFolder")}}</h4>
     <div class="form_div">
-      <input type="text" class="form__input browser-default" id="newFolderName" name="newFolderName" placeholder="{{gstr('newFolderName')}}" required>
+      <input type="text" class="form__input browser-default" id="newFolderName" name="newFolderName"
+        placeholder="{{gstr('newFolderName')}}" required>
     </div>
   </div>
   <div class="modal-footer">
-    <a href="#!" class="modal-close waves-effect btn red"><i class="material-icons left">close</i>{{gstr("close")}}</a>
-    <button class="btn waves-effect waves-light" type="submit" name="action">
-      <i class="material-icons left">create_new_folder</i>{{gstr("newFolder")}}
-    </button>
-          
+    <a class="modal-close waves-effect btn red"><i class="material-icons left">close</i>{{gstr("close")}}</a>
+    <a class="btn waves-effect waves-light" onclick="newFolder();"><i
+        class="material-icons left">create_new_folder</i>{{gstr("newFolder")}}</a>
   </div>
 </div>
-</form>
-<div id="previewModal" class="modal modal-fixed-footer">
-    <div class="modal-content">
-      <h4 id="previewModalFilename" style="word-wrap: break-word;
-      white-space: -moz-pre-wrap;
-      white-space: pre-wrap;">No File is current previewing</h4>
-      <div id="previewModalFrame">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <a href='javascript:openShareModal()' id="modalShareAction" class="waves-effect btn-flat"><i class="material-icons left">share</i>{{gstr("share")}}</a>
-      <a href="#!" id="modalDownloadAction" class="waves-effect btn-flat" download><i class="material-icons left">download</i>{{gstr("download")}}</a>
-      <a href="#!" class="modal-close waves-effect btn red"><i class="material-icons left">close</i>{{gstr("close")}}</a>
-    </div>
-</div>
-<div id="filesOptionModal" class="modal modal-fixed-footer">
-  <form method="post" id="deleteForm">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+<div id="filesOptionModal" class="modal modal-fixed-footer bottom-sheet">
+  <form method="post" id="removePermissionSettingForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
   </form>
   <form method="post" id="filesOptionForm">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <div class="modal-content">
-        <h4 id="filesOptionModalFilename" style="word-wrap: break-word;
+      <h4 id="filesOptionModalFilename" style="word-wrap: break-word;
         white-space: -moz-pre-wrap;
         white-space: pre-wrap;">No File is current settings</h4>
-        <ul class="collapsible">
-          <li id="deleteFilesLi">
-            <div class="collapsible-header"><i class="material-icons">delete</i>{{gstr("delete")}}</div>
-            <div class="collapsible-body" >
-              
-              <h5>{{gstr("deleteTip")}}</h5>
-              <a class="btn waves-effect waves-light red" href="javascript:document.getElementById('deleteForm').submit()">
-                <i class="material-icons left">delete</i>{{gstr("delete")}}
-              </a>
-            </div>
-          </li>
-          {% if current_user.role=="admin" %}
-          <li id="canAccessUsersSelectWidgetLi">
-            <div class="collapsible-header"><i class="material-icons">visibility</i>{{gstr("canAccessUsers")}}</div>
-            <div class="collapsible-body" id="canAccessUsersSelectWidget">
-              
-            </div>
-          </li>
-          <li id="canUploadUsersSelectWidgetLi">
-            <div class="collapsible-header"><i class="material-icons">upload</i>{{gstr("canUploadUsers")}}</div>
-            <div class="collapsible-body" id="canUploadUsersSelectWidget">
-              
-            </div>
-          </li>
-          <li id="canDeleteUsersSelectWidgetLi">
-            <div class="collapsible-header"><i class="material-icons">delete</i>{{gstr("canDeleteUsers")}}</div>
-            <div class="collapsible-body" id="canDeleteUsersSelectWidget"> 
-            </div>
-          </li>
-          {% endif %}
-        </ul>
-              
+      <ul class="collapsible">
+        <li id="deleteFilesLi">
+          <div class="collapsible-header"><i class="material-icons">delete</i>{{gstr("delete")}}</div>
+          <div class="collapsible-body">
+            <h5>{{gstr("deleteTip")}}</h5>
+            <a class="btn waves-effect waves-light red" id="deleteBtn">
+              <i class="material-icons left">delete</i>{{gstr("delete")}}
+            </a>
+          </div>
+        </li>
+        {% if current_user.role=="admin" %}
+        <li id="canAccessUsersSelectWidgetLi">
+          <div class="collapsible-header"><i class="material-icons">visibility</i>{{gstr("canAccessUsers")}}</div>
+          <div class="collapsible-body" id="canAccessUsersSelectWidget">
+          </div>
+        </li>
+        <li id="canUploadUsersSelectWidgetLi">
+          <div class="collapsible-header"><i class="material-icons">upload</i>{{gstr("canUploadUsers")}}</div>
+          <div class="collapsible-body" id="canUploadUsersSelectWidget">
+          </div>
+        </li>
+        <li id="canDeleteUsersSelectWidgetLi">
+          <div class="collapsible-header"><i class="material-icons">delete</i>{{gstr("canDeleteUsers")}}</div>
+          <div class="collapsible-body" id="canDeleteUsersSelectWidget">
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+
     </div>
     <div class="modal-footer" id="filesOptionModalFooter">
       <a class="modal-close waves-effect btn-flat">{{gstr("close")}}</a>
-      <button class="btn waves-effect waves-light" type="submit" name="action">
+      <a class="waves-effect btn red" onclick="document.getElementById('removePermissionSettingForm').submit()"><i
+          class="material-icons left">remove_circle</i>{{gstr("removeThisPermissionSetting")}}</a>
+      <button class="btn waves-effect waves-light green" type="submit" name="action">
         <i class="material-icons left">save</i>{{gstr("save")}}
-      </button>    
+      </button>
     </div>
   </form>
 </div>
-<div class="modal" id="loadOptionsModal" style="padding: 0;">
+<div class="modal bottom-sheet" id="loadOptionsModal" style="padding: 0;">
   <div class="modal-content">
-    <h4>{{gstr("loadingOptions")}}</h4>
+    <h4 id="loadOptionsModalTitle">{{gstr("loadingOptions")}}</h4>
   </div>
   <div class="progress" style="background-color: unset;margin:0">
     <div class="indeterminate"></div>
   </div>
 </div>
-<ul class="sidenav" id="filesOptionsMenu">
-  <li><a href="#" class="search-toggle hide-on-med-and-down waves-effect"><i class="material-icons">search</i>{{gstr("search")}}</a></li>
-  {% if canUpload == true %}
-  <li><a href="javascript:$('#filesOptionsMenu').sidenav('close');$('#newFolderModal').modal('open')" class="waves-effect"><i class="material-icons">create_new_folder</i>{{gstr("newFolder")}}</a></li>
-  <li><a href="?action=upload" class="waves-effect"><i class="material-icons">upload</i>{{gstr("upload")}}</a></li>
-  {% endif %}
-  <li><a href="?action=download" class="waves-effect"  id="downloadFolderBtn"><i class="material-icons">download</i>{{gstr("download")}}</a></li>
-  {% if current_user.role == "admin" %}
-  <li><a href="javascript:showFilesOption('{{request.path}}')" class="waves-effect"><i class="material-icons">rule_folder</i>{{gstr("properties")}}</a></li>
-  {% endif %}
-  <li><div class="divider"></div></li>
-  <li><a class="waves-effect" target="_blank" href="?format=print"><i class="material-icons">print</i>{{gstr("print")}}</a></li>
-  <li><a class="waves-effect" href="javascript:$('.buttons-excel').click()"><i class="material-icons">border_all</i>{{gstr("exportToExcel")}}</a></li>
-  <li><a class="waves-effect" href="javascript:$('.buttons-csv').click()"><i class="material-icons">border_all</i>{{gstr("exportToCsv")}}</a></li>
-  <li><a class="waves-effect" href="javascript:mobileCopyTable()"><i class="material-icons">content_copy</i>{{gstr("copyToClipboard")}}</a></li>
-</ul>
-<div id="largeTable" class="hide-on-med-and-down">
-    <div class="card material-table">
-      <div class="table-header">
-        <span class="table-title">
-          <h6>{{ppath|safe}}</h6>
-          <h5>{{reqpath.split("/")[-1]}}</h5>
-        </span>
-        <div class="actions">
-          <a href="#" class="search-toggle waves-effect btn-flat" style="margin-right: 10px;"><i class="material-icons left">search</i>{{gstr("search")}}</a>
-          {% if canUpload == true %}
-          <a href="javascript:$('#newFolderModal').modal('open')" id="newFolderBtn" class="waves-effect btn" style="margin-right: 10px;"><i class="material-icons left white-text">create_new_folder</i>{{gstr("newFolder")}}</a>
-          <a href="?action=upload" class="waves-effect btn" style="margin-right: 10px;"><i class="material-icons left white-text">upload</i>{{gstr("upload")}}</a>
-          {% endif %}
-          <a href="?action=download" id="downloadFolderBtn" class="waves-effect btn" style="margin-right: 10px;"><i class="material-icons left white-text">download</i>{{gstr("download")}}</a>
-          {% if current_user.role == "admin" %}
-          <a class="waves-effect btn" href="javascript:showFilesOption('{{request.path}}')" style="margin-right: 10px;"><i class="material-icons left white-text">rule_folder</i>{{gstr("properties")}}</a>
-          {% endif %}
-        </div>
-      </div>
-      <table id="datatable">
-        <thead>
-          <tr>
-            <th>{{gstr("filename")}}</th>
-            <th>{{gstr("modifytime")}}</th>
-            <th>{{gstr("filetype")}}</th>
-            <th>{{gstr("filesize")}}</th>
-            <th style="width: 70px;"></th>
-          </tr>
-        </thead>
-        <tbody id="fileTableBody">
-          {% for file in files %}
-          {% set filetype = files[file]["filetype"] %}
-          <tr>
-              {% if filetype=="video" %}
-                  <td><a path='javascript:previewVideo("{{file}}")' fileType="{{filetype}}">{{getfilename(file)}}</a></td>
-              {% elif filetype=="audio" %}
-                  <td><a path='javascript:previewAudio("{{file}}")' fileType="{{filetype}}">{{getfilename(file)}}</a></td>
-              {% elif filetype=="image" %}
-                  <td><a path='javascript:previewImage("{{file}}")' fileType="{{filetype}}">{{getfilename(file)}}</a></td>
-              {% elif filetype=="plainTextDocument" %}
-                  <td><a path='javascript:previewTextFile("{{file}}")' fileType="{{filetype}}">{{getfilename(file)}}</a></td>
-              {% else %}
-                  <td><a path="{{file}}" fileType="{{filetype}}">{{getfilename(file)}}</a></td>
-              {% endif %}
-              <td>{{files[file]["modifyTime"]}}</td>
-              <td>{{gstr(filetype)}}</td>
-              <td>{{files[file]["filesize"]}}</td>
-              <td><a class="waves-effect waves-light btn" href="javascript:showFilesOption('{{file}}',{% if isfolder(file) %}true{% else %}false{% endif %})"><i class="material-icons" style="color: white ;">more_vert</i></a></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-</div>
-<ul class="collection with-header show-on-medium-and-down hide-on-med-and-up">
-  <li class="collection-header">
-    <h6>{{ppath|safe}}</h6>
-    <h5 class="truncate" style="margin-right: 50px;height: 30px;">{{reqpath.split("/")[-1]}}</h5>
-    <a href="javascript:$('#filesOptionsMenu').sidenav('open')" class="waves-effect btn right" style="margin-top:-{% if ppath == '' %}40{% else %}57{% endif %}px"><i class="material-icons" style="color: white;">menu</i></a>
-  </li>
-  {% if files|length == 0 %}
-  <li class="collection-item avatar waves-effect mobileFileListItem">
-    <i class="material-icons circle blue">folder_off</i>
-    <span class="title truncate" style="margin-top: 10px;">{{gstr('noFilesInThisFolder')}}</span>
-  </li>
-  {% endif %}
-  {% for file in files %}
-  {% set filetype = files[file]["filetype"] %}
-  {% if filetype=="video" %}
-  <li class="collection-item avatar waves-effect mobileFileListItem" onclick='javascript:previewVideo("{{file}}")'>
-    <i class="material-icons circle blue">video_file</i>
-  {% elif filetype=="audio" %}
-  <li class="collection-item avatar waves-effect mobileFileListItem" onclick='javascript:previewAudio("{{file}}")'>
-    <i class="material-icons circle blue">audio_file</i>
-  {% elif filetype=="image" %}
-  <li class="collection-item avatar waves-effect mobileFileListItem" onclick='javascript:previewImage("{{file}}")'>
-    <i class="material-icons circle blue">image</i>
-  {% elif filetype=="plainTextDocument" %}
-  <li class="collection-item avatar waves-effect mobileFileListItem" onclick='javascript:previewTextFile("{{file}}")'>
-    <i class="material-icons circle blue">description</i>
-  {% elif filetype=="folder" %}
-  <li class="collection-item avatar waves-effect mobileFileListItem" onclick='location.href="{{file}}"'>
-    <i class="material-icons circle blue">folder</i>
-  {% else %}
-  <li class="collection-item avatar waves-effect mobileFileListItem" onclick='window.onbeforeunload = null;location.href="{{file}}"'>
-    <i class="material-icons circle blue">insert_drive_file</i>
-  {% endif %}
-    <span class="title truncate" style="margin-right: 30px;">{{getfilename(file)}}</span>
-    <p style="margin-right:30px">{{files[file]["modifyTime"]}}&nbsp;
-      {{gstr(filetype)}}&nbsp;
-      {{files[file]["filesize"]}}
-    </p>
-    <a href="javascript:showFilesOption('{{file}}',{% if isfolder(file) %}true{% else %}false{% endif %})" class="secondary-content waves-effect btn" style="padding-left: 5px;padding-right:5px;"><i class="material-icons">more_vert</i></a>
-  </li>
-  {% endfor %}
-{% endblock %}
+<div class="previewModal" id="newPreviewModal">
+  <div id="previewFrame" class="valign-wrapper">
 
+  </div>
+  <div id="previewToolBar">
+    <nav>
+      <div class="nav-wrapper">
+        <span class="left" id="previewModalFilenameLabel">Filename</span>
+        <ul class="right">
+          <li><a onclick="fullscreen();"><i class="material-icons center">fullscreen</i></a></li>
+          <li><a id="previewModalShareBtn" title="{{gstr('share')}}"><i class="material-icons center">share</i></a></li>
+          <li><a id="previewModalDownloadBtn" title="{{gstr('download')}}" download><i
+                class="material-icons center">download</i></a></li>
+          <li><a onclick="closePreviewModal();" title="{{gstr('close')}}"><i class="material-icons center">close</i></a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</div>
+<ul class="sidenav" id="filesOptionsMenu">
+  <li><a href="#" class="search-toggle hide-on-med-and-down waves-effect"><i
+        class="material-icons">search</i>{{gstr("search")}}</a></li>
+  <li id="mobileNewFolderLi"><a onclick="$('#filesOptionsMenu').sidenav('close');$('#newFolderModal').modal('open')"
+      class="waves-effect"><i class="material-icons">create_new_folder</i>{{gstr("newFolder")}}</a></li>
+  <li id="mobileUploadLi"><a onclick='$("#filesOptionsMenu").sidenav("close");$("#uploadSidenav").sidenav("open")'
+      class="waves-effect noHref"><i class="material-icons">upload</i>{{gstr("upload")}}</a></li>
+  <li><a href="?action=download" class="waves-effect" id="mobileDownloadFolderLi"><i
+        class="material-icons">download</i>{{gstr("download")}}</a></li>
+  {% if current_user.role == "admin" %}
+  <li id="mobilePropertiesBtn"><a class="waves-effect noHref"><i
+        class="material-icons">rule_folder</i>{{gstr("properties")}}</a></li>
+  {% endif %}
+  <li>
+    <div class="divider"></div>
+  </li>
+  <li><a class="waves-effect" target="_blank" href="?format=print"><i
+        class="material-icons">print</i>{{gstr("print")}}</a></li>
+  <li><a class="waves-effect" onclick="$('.buttons-excel').click()"><i
+        class="material-icons">border_all</i>{{gstr("exportToExcel")}}</a></li>
+  <li><a class="waves-effect" onclick="$('.buttons-csv').click()"><i
+        class="material-icons">border_all</i>{{gstr("exportToCsv")}}</a></li>
+  <li><a class="waves-effect" onclick="mobileCopyTable()"><i
+        class="material-icons">content_copy</i>{{gstr("copyToClipboard")}}</a></li>
+</ul>
+<div class="card" id="upload-task-card">
+  <div class="card-content" id="uploadTaskCardContent">
+    <span class="card-title">{{gstr("upload")}}</span>
+  </div>
+</div>
+<div id="largeTable" class="hide-on-med-and-down">
+  <div class="card material-table">
+    <table id="datatable">
+      <thead>
+        <tr>
+          <th style="width: 50px;"></th>
+          <th>{{gstr("filename")}}</th>
+          <th>{{gstr("modifytime")}}</th>
+          <th>{{gstr("filetype")}}</th>
+          <th>{{gstr("filesize")}}</th>
+          <th style="width: 70px;"></th>
+        </tr>
+      </thead>
+      <tbody id="fileTableBody">
+
+      </tbody>
+    </table>
+  </div>
+</div>
+<ul class="collection show-on-medium-and-down hide-on-med-and-up" id="mobileList">
+
+</ul>
+{% endblock %}
 {% block onLoadScript %}
 $('#filesOptionsMenu').sidenav({"edge":"right"});
-$('.modal').modal({
-    "onCloseStart":function(){
-    document.getElementById("previewModalFrame").innerHTML=""
-    document.getElementById("previewModalFilename").innerHTML="No File is current previewing"
-}
-});
+$('#uploadSidenav').sidenav({"edge":"right"});
+$('.modal').modal();
+$("#dropFileTipModal").modal({
+"opacity":0
+})
 $("#loadOptionsModal").modal({
-  "dismissible":false
+"dismissible":false
 })
 $(".secondary-content").click(function(e) {
-  e.stopPropagation();
+e.stopPropagation();
 });
+setTimeout(function() {
+resize()
+},500)
 {% endblock %}
 {% block extraJS %}
 <script src="/?action=getResource&rname=jquery.qrcode.min.js"></script>

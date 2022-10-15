@@ -23,7 +23,7 @@
         <tbody>
             {% for file in files %}
             <tr>
-                <td>{{getfilename(file)}}</td>
+                <td>{{file.split("/")[-1]}}</td>
                 <td>{{files[file]["modifyTime"]}}</td>
                 <td>{{gstr(files[file]["filetype"])}}</td>
                 <td>{{files[file]["filesize"]}}</td>
@@ -32,20 +32,7 @@
     </table>
 </body>
 <script>
-    window.onload = function(){
-        window.print();
-    }
-    if (window.matchMedia) {
-            var mediaQueryList = window.matchMedia('print');
-
-            mediaQueryList.addListener(function (mql) {
-                //alert($(mediaQueryList).html());
-                if (mql.matches) {
-                    
-                } else {
-                    window.close();
-                }
-            });
-        }
+    window.onload = function() {window.print()}
+    window.onfocus = function () {window.close()}
 </script>
 </html>
