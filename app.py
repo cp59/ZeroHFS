@@ -48,6 +48,12 @@ loginSessionLists = {}
 ipAccessControl = {}
 rpath = ""
 
+if os.path.isdir("configs") == False:
+    print(
+        "Could not find ZeroHFS server configuration file, please execute configCreator.py to initialize the settings."
+    )
+    sys.exit(0)
+
 
 def getRealPath(path):
     if path[-1] == "/" and path != "/":
